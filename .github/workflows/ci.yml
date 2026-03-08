@@ -28,7 +28,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test.txt
           python -m pip install -e python_lib
-          python -m pip install -r server/requirements.txt
           python -m pip install fastapi uvicorn flask flask-sock
 
       - name: Verify critical imports
