@@ -1,0 +1,17 @@
+[MASTER]
+ignore=.venv,.pytest_cache
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    duplicate-code,
+    invalid-name,
+    redefined-builtin,
+    protected-access

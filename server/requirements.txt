@@ -1,0 +1,6 @@
+-e ../python_lib
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.1
+flask==3.1.2
+flask-sock==0.7.0

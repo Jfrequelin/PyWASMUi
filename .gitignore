@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+dist/
+
+# Rust / WASM
+**/target/
+**/pkg/
+
+# Editors/OS
+.vscode/
+.DS_Store
