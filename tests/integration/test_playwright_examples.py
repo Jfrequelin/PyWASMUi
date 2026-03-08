@@ -5,6 +5,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -13,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-PYTHON = "/home/rlv/.pyenv/versions/3.11.14/bin/python"
+PYTHON = sys.executable
 
 EXAMPLE_CASES = [
     {
