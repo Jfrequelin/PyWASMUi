@@ -125,7 +125,7 @@ function resolveFallbackWebSocketUrl() {
     return `${protocol}//${window.location.host}/ws`;
   }
 
-  return 'ws://127.0.0.1:8000/ws';
+  return null;
 }
 
 const TAB_NAME_PREFIX = 'pywasm-tab:';
@@ -315,6 +315,10 @@ async function start() {
   });
 
   const wsUrl = resolveConfiguredWebSocketUrl(runtimeConfig) || resolveFallbackWebSocketUrl();
+  if (!wsUrl) {
+    console.error('[pyWASM] Unable to resolve websocket URL.');
+    return;
+  }
   socket = new WebSocket(wsUrl);
 
   socket.onopen = () => {
