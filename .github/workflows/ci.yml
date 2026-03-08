@@ -27,8 +27,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test.txt
+          python -m pip install -e "python_lib[fastapi,flask,test]"
           python -m pip install -r server/requirements.txt
-          python -m pip install -e python_lib
+
+      - name: Verify critical imports
+        run: |
+          python -c "import fastapi"
+          python -c "import flask"
 
       - name: Install Playwright browsers
         run: python -m playwright install --with-deps chromium
