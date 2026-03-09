@@ -38,7 +38,7 @@ class StyleTemplate:
                 if normalized:
                     by_class[class_name] = normalized
 
-        return cls(by_kind=by_kind, by_class=by_class)
+        return cls(by_kind, by_class)
 
     def to_dict(self) -> dict[str, Any]:
         return {

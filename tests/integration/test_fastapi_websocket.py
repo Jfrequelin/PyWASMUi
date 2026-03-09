@@ -164,3 +164,29 @@ def test_websocket_refresh_keeps_session_state_with_session_token() -> None:
         second_update = _receive_non_ack(ws)
         second_update_patch = _patch(second_update)
         assert second_update_patch["text"] == "2"
+
+
+def test_websocket_accepts_receipt_for_server_command() -> None:
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws") as ws:
+        init = json.loads(ws.receive_text())
+        first_server_command = json.loads(ws.receive_text())
+        command_id = first_server_command.get("meta", {}).get("command_id")
+
+        assert isinstance(command_id, str)
+
+        ws.send_text(
+            json.dumps(
+                {
+                    "protocol": 1,
+                    "type": "receipt",
+                    "session": {"token": init["session"]["token"]},
+                    "receipt": {"command_id": command_id, "status": "received"},
+                }
+            )
+        )
+
+        # Endpoint should keep the socket open after receipt.
+        remaining = [json.loads(ws.receive_text()) for _ in range(3)]
+        assert all(msg["type"] == "create" for msg in remaining)

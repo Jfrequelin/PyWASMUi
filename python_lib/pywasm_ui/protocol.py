@@ -95,3 +95,17 @@ class EventMessage(BaseModel):
     session: SessionRef
     event: EventPayload
     mac: str | None = None
+
+
+class ReceiptPayload(BaseModel):
+    command_id: str
+    status: str | None = None
+
+
+class ReceiptMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    protocol: Literal[1]
+    type: Literal["receipt"]
+    session: SessionRef
+    receipt: ReceiptPayload

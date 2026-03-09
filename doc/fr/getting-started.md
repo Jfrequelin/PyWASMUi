@@ -27,7 +27,10 @@ cargo install wasm-pack
 
 ## Lancement local
 
-Terminal 1 (build WASM):
+Le package WASM precompile (`client/wasm_ui/pkg`) est commit dans le depot,
+donc le premier lancement fonctionne sans build Rust local.
+
+Terminal 1 (rebuild WASM optionnel, seulement apres modification du runtime Rust):
 
 ```bash
 cd client/wasm_ui
@@ -100,6 +103,8 @@ Dans le template:
 ```
 
 ## Build production
+
+Necessaire uniquement si vous modifiez `client/wasm_ui/src`.
 
 ```bash
 cd client/wasm_ui

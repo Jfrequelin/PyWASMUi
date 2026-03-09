@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import bind_optional_handler, init_standard_widget
 
 if TYPE_CHECKING:
     from pywasm_ui.session.types import CompatibleEventHandler
@@ -23,20 +24,19 @@ class CheckboxWidget(WasmWidget):
         if checked:
             attrs["checked"] = "true"
 
-        merged_props = {
-            "__tag": "input",
-            "__event": "change",
-            "input_type": "checkbox",
-            "value": value,
-            "attrs": attrs,
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="Checkbox",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag="input",
+            event="change",
+            defaults={
+                "input_type": "checkbox",
+                "value": value,
+                "attrs": attrs,
+            },
+            props=props,
+            style=style,
         )
-        if on_change is not None:
-            self.on("change", on_change)
+        bind_optional_handler(self, "change", on_change)

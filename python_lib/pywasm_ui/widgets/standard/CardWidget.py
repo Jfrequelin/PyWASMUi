@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import init_standard_widget
 
 
 class CardWidget(WasmWidget):
@@ -13,15 +14,13 @@ class CardWidget(WasmWidget):
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        merged_props = {
-            "__tag": "div",
-            "classes": ["card"],
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="Card",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag="div",
+            defaults={"classes": ["card"]},
+            props=props,
+            style=style,
         )

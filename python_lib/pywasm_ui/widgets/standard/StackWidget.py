@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import init_standard_widget
 
 
 class StackWidget(WasmWidget):
@@ -14,23 +15,18 @@ class StackWidget(WasmWidget):
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        merged_props = {
-            "__tag": "div",
-            "classes": ["stack"],
-            **(props or {}),
-        }
-        props_with_default_style = merge_style_props(
-            merged_props,
-            {
+        init_standard_widget(
+            self,
+            id=id,
+            kind=self.__class__.__name__.removesuffix("Widget"),
+            parent=parent,
+            tag="div",
+            defaults={"classes": ["stack"]},
+            props=props,
+            style=style,
+            default_style={
                 "display": "flex",
                 "flex-direction": "column",
                 "gap": gap,
             },
-        )
-        super().__init__(
-            id=id,
-            kind="Stack",
-            parent=parent,
-            props=merge_style_props(props_with_default_style, style),
-            children=[],
         )

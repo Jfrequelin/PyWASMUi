@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import init_standard_widget
 
 
 class AlertWidget(WasmWidget):
@@ -15,17 +16,17 @@ class AlertWidget(WasmWidget):
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        merged_props = {
-            "__tag": "div",
-            "__text_prop": "text",
-            "text": text,
-            "classes": ["alert", f"alert-{level}"],
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="Alert",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag="div",
+            text_prop="text",
+            defaults={
+                "text": text,
+                "classes": ["alert", f"alert-{level}"],
+            },
+            props=props,
+            style=style,
         )

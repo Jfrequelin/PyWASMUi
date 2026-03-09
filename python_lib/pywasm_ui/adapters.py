@@ -519,7 +519,7 @@ def mount_fastapi_websocket(
         )
         if latency_s > 0:
             await asyncio.sleep(latency_s)
-        await comm.send_commands(session.bootstrap_messages())
+        await comm.send_commands(session.prepare_outbound_commands(session.bootstrap_messages()))
 
         try:
             async for raw in comm.receive_events():
@@ -535,7 +535,7 @@ def mount_fastapi_websocket(
 
                 if latency_s > 0:
                     await asyncio.sleep(latency_s)
-                await comm.send_commands(responses)
+                await comm.send_commands(session.prepare_outbound_commands(responses))
         except WebSocketDisconnect:
             return
 
@@ -589,7 +589,7 @@ def register_flask_socket(
             session = factory()
             active_sessions[session.session_token] = session
 
-        for msg in session.bootstrap_messages():
+        for msg in session.prepare_outbound_commands(session.bootstrap_messages()):
             if latency_s > 0:
                 time.sleep(latency_s)
             ws.send(msg)  # type: ignore[attr-defined]
@@ -607,7 +607,7 @@ def register_flask_socket(
             except ProtocolViolationError:
                 # Flask-Sock close semantics can vary by backend; end the loop safely.
                 return
-            for response in responses:
+            for response in session.prepare_outbound_commands(responses):
                 if latency_s > 0:
                     time.sleep(latency_s)
                 ws.send(response)  # type: ignore[attr-defined]

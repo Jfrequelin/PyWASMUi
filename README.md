@@ -163,10 +163,10 @@ Template `dashboard.html` :
 
 ## Lancement developpement
 
-```bash
-cd client/wasm_ui
-wasm-pack build --target web --out-dir pkg
+Le package WASM precompile (`client/wasm_ui/pkg`) est versionne dans le depot,
+donc le projet fonctionne des le premier clone sans build Rust local.
 
+```bash
 python -m uvicorn server.app.examples.fastapi.fastapi_server:app --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -183,6 +183,8 @@ python -m uvicorn server.app.examples.fastapi.01_single_widget_fastapi:app --hos
 ```
 
 ## Build WASM
+
+Rebuild utile uniquement si vous modifiez `client/wasm_ui/src`.
 
 ```bash
 cd client/wasm_ui

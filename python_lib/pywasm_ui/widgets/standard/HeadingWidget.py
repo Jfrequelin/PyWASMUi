@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import init_standard_widget
 
 
 class HeadingWidget(WasmWidget):
@@ -16,16 +17,14 @@ class HeadingWidget(WasmWidget):
         style: Style | dict[str, Any] | None = None,
     ) -> None:
         bounded_level = max(1, min(6, level))
-        merged_props = {
-            "__tag": f"h{bounded_level}",
-            "__text_prop": "text",
-            "text": text,
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="Heading",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag=f"h{bounded_level}",
+            text_prop="text",
+            defaults={"text": text},
+            props=props,
+            style=style,
         )

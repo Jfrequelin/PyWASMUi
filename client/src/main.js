@@ -299,6 +299,42 @@ function consumePendingCommand(nonceKey) {
   }
 }
 
+function sendServerCommandReceiptIfPresent(rawMessage) {
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(rawMessage);
+    const commandType = parsed?.type;
+    if (!['create', 'update', 'delete'].includes(commandType)) {
+      return;
+    }
+
+    const commandId = parsed?.meta?.command_id;
+    if (typeof commandId !== 'string' || commandId.length === 0) {
+      return;
+    }
+
+    const token = getStoredSessionToken();
+    if (typeof token !== 'string' || token.length === 0) {
+      return;
+    }
+
+    socket.send(JSON.stringify({
+      protocol: 1,
+      type: 'receipt',
+      session: { token },
+      receipt: {
+        command_id: commandId,
+        status: 'received'
+      }
+    }));
+  } catch {
+    // Ignore non-JSON payloads.
+  }
+}
+
 // Expose only the transport bridge to WASM. No business logic here.
 globalThis.wsSend = wsSend;
 
@@ -332,6 +368,7 @@ async function start() {
       if (consumeAckIfPresent(text)) {
         return;
       }
+      sendServerCommandReceiptIfPresent(text);
       wasmHandleServerMessage(text);
     }
   };

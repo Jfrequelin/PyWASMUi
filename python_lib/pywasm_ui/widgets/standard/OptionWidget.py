@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import init_standard_widget
 
 
 class OptionWidget(WasmWidget):
@@ -20,17 +21,17 @@ class OptionWidget(WasmWidget):
         if selected:
             attrs["selected"] = "true"
 
-        merged_props = {
-            "__tag": "option",
-            "__text_prop": "text",
-            "text": text,
-            "attrs": attrs,
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="Option",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag="option",
+            text_prop="text",
+            defaults={
+                "text": text,
+                "attrs": attrs,
+            },
+            props=props,
+            style=style,
         )

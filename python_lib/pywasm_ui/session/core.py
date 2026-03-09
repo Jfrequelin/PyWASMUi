@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import re
+import uuid
+import json
 from typing import Any, Sequence
 from pydantic import ValidationError
 
-from pywasm_ui.protocol import EventMessage, OutgoingMessage, SessionRef, WidgetPayload
+from pywasm_ui.protocol import (
+    EventMessage,
+    OutgoingMessage,
+    ReceiptMessage,
+    SessionRef,
+    WidgetPayload,
+)
 from pywasm_ui.security import SecurityManager
 from pywasm_ui.widgets import ButtonWidget, LabelWidget, Style, WasmWidget, WidgetTree
 from pywasm_ui.widgets.base import style_dict
@@ -33,6 +41,7 @@ class PyWasmSession:
         self._replay_commands: list[str] = []
         self._default_style_by_kind: dict[str, dict[str, str]] = {}
         self._default_style_by_class: dict[str, dict[str, str]] = {}
+        self._pending_outbound_command_ids: set[str] = set()
         self.data: dict[str, Any] = {}
 
     @property
@@ -279,6 +288,42 @@ class PyWasmSession:
             return responses
         return [*responses, ack]
 
+    def _with_command_id(self, raw: str) -> str:
+        try:
+            outgoing = OutgoingMessage.model_validate_json(raw)
+        except ValidationError:
+            return raw
+
+        if outgoing.type not in {"create", "update", "delete"}:
+            return raw
+
+        meta = dict(outgoing.meta or {})
+        command_id = meta.get("command_id")
+        if not isinstance(command_id, str) or len(command_id) == 0:
+            command_id = uuid.uuid4().hex
+            meta["command_id"] = command_id
+            outgoing.meta = meta
+            raw = outgoing.model_dump_json(exclude_none=True)
+
+        self._pending_outbound_command_ids.add(command_id)
+        return raw
+
+    def prepare_outbound_commands(self, raw_commands: Sequence[str]) -> list[str]:
+        return [self._with_command_id(raw) for raw in raw_commands]
+
+    def _handle_receipt_message(self, raw: str) -> list[str]:
+        try:
+            incoming = ReceiptMessage.model_validate_json(raw)
+        except ValidationError as exc:
+            raise ProtocolViolationError("invalid-json-schema", close_code=1003) from exc
+
+        sec = self._security.validate_session_token(incoming.session.token)
+        if sec is None:
+            raise ProtocolViolationError("invalid-session")
+
+        self._pending_outbound_command_ids.discard(incoming.receipt.command_id)
+        return []
+
     @staticmethod
     def _normalize_incoming_value(value: Any) -> Any:
         normalized: Any = value
@@ -345,6 +390,14 @@ class PyWasmSession:
         return out
 
     def handle_client_message(self, raw: str) -> list[str]:
+        try:
+            frame = json.loads(raw)
+        except (TypeError, ValueError):
+            frame = None
+
+        if isinstance(frame, dict) and frame.get("type") == "receipt":
+            return self._handle_receipt_message(raw)
+
         try:
             incoming = EventMessage.model_validate_json(raw)
         except ValidationError as exc:

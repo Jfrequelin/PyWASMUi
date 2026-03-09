@@ -9,6 +9,8 @@ dist/
 # Rust / WASM
 **/target/
 **/pkg/
+!client/wasm_ui/pkg/
+!client/wasm_ui/pkg/**
 
 # Editors/OS
 .vscode/

@@ -9,7 +9,7 @@ import pytest
 
 from pywasm_ui.security import SecurityManager
 from pywasm_ui.session import ProtocolViolationError, PyWasmSession
-from pywasm_ui.protocol import OutgoingMessage
+from pywasm_ui.protocol import OutgoingMessage, WidgetPayload
 from pywasm_ui.widgets import ButtonWidget, LabelWidget
 
 
@@ -264,6 +264,52 @@ def test_event_processing_emits_ack_for_nonce() -> None:
     assert responses[-1]["type"] == "ack"
     assert responses[-1]["meta"]["nonce"] == 42
     assert responses[-1]["meta"]["status"] == "processed"
+
+
+def test_prepare_outbound_commands_adds_command_id_for_server_commands() -> None:
+    session = PyWasmSession(SecurityManager(server_secret=b"test-server-secret"))
+
+    tagged = [
+        json.loads(raw)
+        for raw in session.prepare_outbound_commands(
+            [
+                OutgoingMessage(
+                    type="create",
+                    widget=WidgetPayload(id="x", kind="Label", parent="root"),
+                ).model_dump_json(),
+                OutgoingMessage(type="update", patch={"id": "x", "text": "ok"}).model_dump_json(),
+                OutgoingMessage(
+                    type="delete",
+                    widget=WidgetPayload(id="x", kind="Unknown", parent="root"),
+                ).model_dump_json(),
+                OutgoingMessage(type="ack", meta={"nonce": 1}).model_dump_json(),
+            ]
+        )
+    ]
+
+    assert isinstance(tagged[0].get("meta", {}).get("command_id"), str)
+    assert isinstance(tagged[1].get("meta", {}).get("command_id"), str)
+    assert isinstance(tagged[2].get("meta", {}).get("command_id"), str)
+    assert "command_id" not in tagged[3].get("meta", {})
+
+
+def test_receipt_message_is_accepted_for_known_session() -> None:
+    session = PyWasmSession(SecurityManager(server_secret=b"test-server-secret"))
+    init = json.loads(session.bootstrap_messages()[0])
+
+    outbound = session.prepare_outbound_commands(
+        [OutgoingMessage(type="update", patch={"id": "label1", "text": "ok"}).model_dump_json()]
+    )
+    command_id = json.loads(outbound[0])["meta"]["command_id"]
+
+    receipt = {
+        "protocol": 1,
+        "type": "receipt",
+        "session": {"token": init["session"]["token"]},
+        "receipt": {"command_id": command_id, "status": "received"},
+    }
+
+    assert session.handle_client_message(json.dumps(receipt)) == []
 
 
 def test_session_pythonic_helpers_connect_and_manipulate_widgets() -> None:

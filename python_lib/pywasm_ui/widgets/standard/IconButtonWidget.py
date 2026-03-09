@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..base import Style, WasmWidget, merge_style_props
+from ..base import Style, WasmWidget
+from ._common import bind_optional_handler, init_standard_widget
 
 if TYPE_CHECKING:
     from pywasm_ui.session.types import CompatibleEventHandler
@@ -22,21 +23,20 @@ class IconButtonWidget(WasmWidget):
         on_click: "CompatibleEventHandler | None" = None,
     ) -> None:
         label = f"{icon} {text}".strip()
-        merged_props = {
-            "__tag": "button",
-            "__text_prop": "text",
-            "__event": "click",
-            "text": label,
-            "enabled": enabled,
-            "classes": classes or ["icon-button"],
-            **(props or {}),
-        }
-        super().__init__(
+        init_standard_widget(
+            self,
             id=id,
-            kind="IconButton",
+            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            props=merge_style_props(merged_props, style),
-            children=[],
+            tag="button",
+            text_prop="text",
+            event="click",
+            defaults={
+                "text": label,
+                "enabled": enabled,
+                "classes": classes or ["icon-button"],
+            },
+            props=props,
+            style=style,
         )
-        if on_click is not None:
-            self.on("click", on_click)
+        bind_optional_handler(self, "click", on_click)
