@@ -12,8 +12,8 @@
 Depuis la racine du projet:
 
 ```bash
-cd server && /home/rlv/.pyenv/versions/3.11.14/bin/python -m pip install -r requirements.txt
-cd /home/rlv/Work/projects/pyWasm/server && /home/rlv/.pyenv/versions/3.11.14/bin/python -m pip install -e ../python_lib
+python -m pip install -r server/requirements.txt
+python -m pip install -e python_lib
 ```
 
 ## Outils Rust/WASM (une seule fois)
@@ -30,15 +30,14 @@ cargo install wasm-pack
 Terminal 1 (build WASM):
 
 ```bash
-cd /home/rlv/Work/projects/pyWasm/client/wasm_ui
+cd client/wasm_ui
 wasm-pack build --target web --out-dir pkg
 ```
 
 Terminal 2 (serveur FastAPI):
 
 ```bash
-cd /home/rlv/Work/projects/pyWasm
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m uvicorn server.app.examples.fastapi.fastapi_server:app --host 127.0.0.1 --port 8000
+python -m uvicorn server.app.examples.fastapi.fastapi_server:app --host 127.0.0.1 --port 8000
 ```
 
 Ensuite ouvrir `http://127.0.0.1:8000`.
@@ -103,6 +102,6 @@ Dans le template:
 ## Build production
 
 ```bash
-cd /home/rlv/Work/projects/pyWasm/client/wasm_ui
+cd client/wasm_ui
 wasm-pack build --target web --out-dir pkg
 ```

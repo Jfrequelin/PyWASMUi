@@ -34,10 +34,10 @@ make run-flask-single
 
 ```bash
 # depuis la racine
-cd server && /home/rlv/.pyenv/versions/3.11.14/bin/python -m pip install -r requirements.txt
+python -m pip install -r server/requirements.txt
 
 # installer la bibliotheque locale reutilisable
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m pip install -e ../python_lib
+python -m pip install -e python_lib
 
 # une seule fois (outillage Rust/WASM)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -49,7 +49,7 @@ cargo install wasm-pack
 Dependances de test:
 
 ```bash
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m pip install -r requirements-test.txt
+python -m pip install -r requirements-test.txt
 ```
 
 ## Reutilisation en bibliotheque (FastAPI / Flask)
@@ -167,8 +167,7 @@ Template `dashboard.html` :
 cd client/wasm_ui
 wasm-pack build --target web --out-dir pkg
 
-cd /home/rlv/Work/projects/pyWasm
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m uvicorn server.app.examples.fastapi.fastapi_server:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn server.app.examples.fastapi.fastapi_server:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Ouvrir `http://127.0.0.1:8000`.
@@ -180,7 +179,7 @@ Voir `server/app/examples/fastapi/EXAMPLES.md` pour la liste complete.
 Lancer directement un exemple :
 
 ```bash
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m uvicorn server.app.examples.fastapi.01_single_widget_fastapi:app --host 127.0.0.1 --port 8000
+python -m uvicorn server.app.examples.fastapi.01_single_widget_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
 ## Build WASM

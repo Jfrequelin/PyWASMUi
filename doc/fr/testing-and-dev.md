@@ -3,8 +3,7 @@
 ## Lancer tous les tests
 
 ```bash
-cd /home/rlv/Work/projects/pyWasm
-/home/rlv/.pyenv/versions/3.11.14/bin/python -m pytest
+python -m pytest
 ```
 
 ## Perimetre couvert
@@ -22,7 +21,7 @@ La suite couvre notamment:
 ## Build WASM
 
 ```bash
-cd /home/rlv/Work/projects/pyWasm/client/wasm_ui
+cd client/wasm_ui
 wasm-pack build --target web --out-dir pkg
 ```
 
