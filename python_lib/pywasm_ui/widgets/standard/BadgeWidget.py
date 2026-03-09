@@ -6,8 +6,8 @@ from ..base import Style, WasmWidget
 from ._common import init_standard_widget
 
 
-class BadgeWidget(WasmWidget):
-    def __init__(
+class BadgeWidget(WasmWidget):  # pylint: disable=super-init-not-called
+    def __init__(  # pylint: disable=super-init-not-called
         self,
         id: str,
         parent: str = "root",

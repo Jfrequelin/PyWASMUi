@@ -22,7 +22,7 @@ from .errors import ProtocolViolationError
 from .types import CallbackResponse, CompatibleEventHandler, EventHandler, adapt_event_handler
 
 
-class PyWasmSession:
+class PyWasmSession:  # pylint: disable=too-many-public-methods
     def __init__(
         self,
         security_manager: SecurityManager,

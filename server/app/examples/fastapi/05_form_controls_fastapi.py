@@ -97,7 +97,11 @@ def _build_widgets() -> list[WasmWidget]:
     )
 
     return [
-        WindowWidget(id="window_main", parent="root", style=Style(max_width="720px", margin="0 auto")),
+        WindowWidget(
+            id="window_main",
+            parent="root",
+            style=Style(max_width="720px", margin="0 auto"),
+        ),
         CardWidget(
             id="card_main",
             parent="window_main",
@@ -110,7 +114,13 @@ def _build_widgets() -> list[WasmWidget]:
         agree_checkbox,
         LabelWidget(id="checkbox_value", parent="form_stack", text="Accepted: False"),
         category_select,
-        OptionWidget(id="category_alpha", parent="category_select", text="Alpha", value="alpha", selected=True),
+        OptionWidget(
+            id="category_alpha",
+            parent="category_select",
+            text="Alpha",
+            value="alpha",
+            selected=True,
+        ),
         OptionWidget(id="category_beta", parent="category_select", text="Beta", value="beta"),
         LabelWidget(id="select_value", parent="form_stack", text="Select changed: 0"),
         ProgressWidget(id="task_progress", parent="form_stack", value=25, max_value=100),

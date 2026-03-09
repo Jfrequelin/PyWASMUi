@@ -10,17 +10,23 @@ from pywasm_ui import (
     AlertWidget,
     BadgeWidget,
     ButtonWidget,
+    CheckboxWidget,
     CardWidget,
     ConnectionStatusWidget,
     ContainerWidget,
+    DatePickerWidget,
     DividerWidget,
     HeadingWidget,
     IconButtonWidget,
     LabelWidget,
     ListViewWidget,
+    ModalWidget,
+    OptionWidget,
     ParagraphWidget,
+    ProgressWidget,
     PyWasmSession,
     RowWidget,
+    SelectWidget,
     SliderWidget,
     StackWidget,
     Style,
@@ -34,7 +40,7 @@ from pywasm_ui.protocol import EventPayload
 from pywasm_ui.session.types import CallbackResponse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CLIENT_ROOT = PROJECT_ROOT / "client"
+USER_WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
@@ -161,6 +167,56 @@ def on_icon_click(session: PyWasmSession) -> list[CallbackResponse]:
     ]
 
 
+def on_checkbox_change(session: PyWasmSession, _event: EventPayload) -> list[CallbackResponse]:
+    accepted = not bool(session.data.get("accepted", False))
+    session.data["accepted"] = accepted
+    return [
+        session.update("checkbox_value", text=f"Accepted: {accepted}"),
+        session.update("badge_state", text="Checkbox toggled"),
+    ]
+
+
+def on_date_change(session: PyWasmSession, event: EventPayload) -> list[CallbackResponse]:
+    value = str(event.value or "-")
+    return [
+        session.update("date_value", text=f"Date: {value}"),
+        session.update("badge_state", text="Date changed"),
+    ]
+
+
+def on_select_change(session: PyWasmSession, _event: EventPayload) -> list[CallbackResponse]:
+    count = _safe_int(session.data.get("select_changes"), default=0) + 1
+    session.data["select_changes"] = count
+    return [
+        session.update("select_value", text=f"Select changed: {count}"),
+        session.update("badge_state", text="Select changed"),
+    ]
+
+
+def on_progress_click(session: PyWasmSession) -> list[CallbackResponse]:
+    current = _safe_int(session.data.get("progress"), default=25)
+    next_value = min(current + 15, 100)
+    session.data["progress"] = next_value
+    return [
+        session.update("task_progress", attrs={"value": str(next_value), "max": "100"}),
+        session.update("badge_state", text="Progress increased"),
+    ]
+
+
+def on_modal_toggle(session: PyWasmSession) -> list[CallbackResponse]:
+    is_open = not bool(session.data.get("modal_open", False))
+    session.data["modal_open"] = is_open
+    if is_open:
+        return [
+            session.update("info_modal", attrs={"open": "true"}),
+            session.update("badge_state", text="Modal opened"),
+        ]
+    return [
+        session.update("info_modal", remove_attrs=["open"]),
+        session.update("badge_state", text="Modal closed"),
+    ]
+
+
 def on_name_change(session: PyWasmSession, event: EventPayload) -> CallbackResponse:
     name = str(event.value or "")
     return session.update("paragraph_name", text=f"Name preview: {name}")
@@ -216,6 +272,40 @@ def _build_interactive_widgets() -> dict[str, WasmWidget]:
     )
     btn_add_row.command(on_add_row_click)
 
+    checkbox_terms = CheckboxWidget(
+        id="checkbox_terms",
+        parent="stack_main",
+        checked=False,
+        on_change=on_checkbox_change,
+    )
+
+    date_input = DatePickerWidget(
+        id="date_input",
+        parent="stack_main",
+        value="2026-03-09",
+        on_change=on_date_change,
+    )
+
+    category_select = SelectWidget(
+        id="category_select",
+        parent="stack_main",
+        on_change=on_select_change,
+    )
+
+    progress_btn = ButtonWidget(
+        id="progress_btn",
+        parent="stack_main",
+        text="Increase Progress",
+        on_click=on_progress_click,
+    )
+
+    modal_btn = ButtonWidget(
+        id="modal_btn",
+        parent="stack_main",
+        text="Toggle Modal",
+        on_click=on_modal_toggle,
+    )
+
     return {
         "name_input": name_input,
         "btn_1": btn_1,
@@ -224,6 +314,11 @@ def _build_interactive_widgets() -> dict[str, WasmWidget]:
         "slider_volume": slider_volume,
         "textarea_notes": textarea_notes,
         "btn_add_row": btn_add_row,
+        "checkbox_terms": checkbox_terms,
+        "date_input": date_input,
+        "category_select": category_select,
+        "progress_btn": progress_btn,
+        "modal_btn": modal_btn,
     }
 
 
@@ -263,6 +358,30 @@ def _build_initial_widgets() -> list[WasmWidget]:
         ParagraphWidget(id="paragraph_slider", parent="stack_main", text="Slider value: 20"),
         widgets["textarea_notes"],
         ParagraphWidget(id="paragraph_notes", parent="stack_main", text="Notes preview:"),
+        widgets["checkbox_terms"],
+        LabelWidget(id="checkbox_value", parent="stack_main", text="Accepted: False"),
+        widgets["date_input"],
+        LabelWidget(id="date_value", parent="stack_main", text="Date: 2026-03-09"),
+        widgets["category_select"],
+        OptionWidget(
+            id="category_alpha",
+            parent="category_select",
+            text="Alpha",
+            value="alpha",
+            selected=True,
+        ),
+        OptionWidget(id="category_beta", parent="category_select", text="Beta", value="beta"),
+        LabelWidget(id="select_value", parent="stack_main", text="Select changed: 0"),
+        ProgressWidget(id="task_progress", parent="stack_main", value=25, max_value=100),
+        widgets["progress_btn"],
+        widgets["modal_btn"],
+        ModalWidget(
+            id="info_modal",
+            parent="stack_main",
+            text="Server-driven modal content",
+            is_open=False,
+            style=Style(border="1px solid #94a3b8", padding="12px"),
+        ),
         ListViewWidget(
             id="list_features",
             parent="stack_main",
@@ -303,6 +422,7 @@ def create_app() -> FastAPI:
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=_build_initial_widgets(),
     )
+    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
 
     @application.get("/health")
     async def health() -> dict[str, str]:
@@ -310,10 +430,11 @@ def create_app() -> FastAPI:
 
     pywasm_ui.fastapi.register_frontend_routes(
         application,
-        CLIENT_ROOT,
+        USER_WEB_ROOT,
         pages={
             "/showcase": "index.html",
         },
+        reserved_paths=("ws", "health", "pywasm-assets"),
     )
     return application
 

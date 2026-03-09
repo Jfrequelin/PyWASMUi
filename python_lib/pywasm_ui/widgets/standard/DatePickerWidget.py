@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from pywasm_ui.session.types import CompatibleEventHandler
 
 
-class DatePickerWidget(WasmWidget):
-    def __init__(
+class DatePickerWidget(WasmWidget):  # pylint: disable=super-init-not-called
+    def __init__(  # pylint: disable=super-init-not-called
         self,
         id: str,
         parent: str = "root",
