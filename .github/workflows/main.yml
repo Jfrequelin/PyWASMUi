@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Setup wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: latest
+
+      - name: Build WASM package (web target)
+        working-directory: client/wasm_ui
+        run: wasm-pack build --target web --out-dir pkg
+
+      - name: Vendor frontend assets into python package
+        run: |
+          rm -rf python_lib/pywasm_ui/_frontend
+          mkdir -p python_lib/pywasm_ui/_frontend
+          cp -R client/* python_lib/pywasm_ui/_frontend/
+
+      - name: Build sdist + wheel
+        working-directory: python_lib
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: python_lib/dist/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release & upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            python_lib/dist/*
+          generate_release_notes: true
