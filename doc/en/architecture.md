@@ -27,6 +27,8 @@
   - open WebSocket connection
   - forward server messages to WASM
   - forward WASM messages through `wsSend`
+  - track pending interactive widget commands
+  - handle `ack` (client -> server) and `receipt` (server -> client)
   - handle connection status display
 
 ### Rust/WASM Runtime
@@ -45,6 +47,13 @@
 3. Render DOM in browser.
 4. User interaction -> `event` message.
 5. Server processing -> `update/create/delete` response.
+6. Client sends `receipt` to confirm delivery of server commands.
+
+## Transport Reliability
+
+- client -> server: event carries `nonce`, then server returns `ack` when processed
+- server -> client: commands are tagged with `meta.command_id`
+- client -> server: `receipt` confirms command delivery
 
 ## Session Resume on Refresh
 

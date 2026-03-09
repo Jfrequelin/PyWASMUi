@@ -1,5 +1,23 @@
 # Tests et Developpement
 
+## Chemin Rapide De Test Apres Clone
+
+```bash
+python -m pip install -r requirements-test.txt
+
+# smoke tests rapides
+python -m pytest tests/unit/test_widgets.py tests/integration/test_fastapi_websocket.py
+
+# suite complete
+python -m pytest
+```
+
+Catalogue Selenium optionnel (Chrome requis):
+
+```bash
+python -m pytest tests/integration/test_selenium_widgets_catalog.py -q
+```
+
 ## Lancer tous les tests
 
 ```bash

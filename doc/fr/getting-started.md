@@ -16,6 +16,27 @@ python -m pip install -r server/requirements.txt
 python -m pip install -e python_lib
 ```
 
+## Quick Start Apres Clone
+
+```bash
+git clone https://github.com/Jfrequelin/PyWASMUi.git
+cd PyWASMUi
+
+python -m pip install -r server/requirements.txt
+python -m pip install -e python_lib
+python -m pip install -r requirements-test.txt
+
+# premier demarrage direct: client/wasm_ui/pkg est partage dans le repo
+python -m uvicorn server.app.examples.fastapi.fastapi_server:app --host 127.0.0.1 --port 8000
+```
+
+Dans un second terminal:
+
+```bash
+curl -sS http://127.0.0.1:8000/health
+python -m pytest tests/unit/test_widgets.py tests/integration/test_fastapi_websocket.py
+```
+
 ## Outils Rust/WASM (une seule fois)
 
 ```bash

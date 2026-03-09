@@ -3,11 +3,43 @@
 ## Main Entry Points
 
 - `mount_fastapi_websocket(app, ...)`
+- `mount_fastapi_frontend(app, ...)`
+- `mount_fastapi_socket(app, ...)` (compatibility alias)
 - `register_flask_socket(sock, ...)`
+- `register_flask_frontend(app, ...)`
+- adapters: `pywasm_ui.fastapi`, `pywasm_ui.flask`
 - `PyWasmSession`
-- standard widgets: `LabelWidget`, `ButtonWidget`, `TextInputWidget`, `ContainerWidget`, `WindowWidget`, `ListViewWidget`
+- standard widgets (full list below)
 - styling: `Style`
-- patch helpers: `patch_text`, `patch_value`, `patch_enabled`, `patch_classes`, `patch_attrs`, `patch_remove_attrs`, `patch_style`, `merge_patches`
+- patch helpers: `set_text`, `patch_value`, `patch_enabled`, `patch_classes`, `patch_attrs`, `patch_remove_attrs`, `patch_style`, `merge_patches`
+- snippets/runtime: `render_embed_snippet`, `write_js_runtime_config`
+
+## Full Standard Widget Catalog
+
+- `WindowWidget`
+- `ContainerWidget`
+- `CardWidget`
+- `StackWidget`
+- `RowWidget`
+- `ListViewWidget`
+- `HeadingWidget`
+- `ParagraphWidget`
+- `LabelWidget`
+- `DividerWidget`
+- `BadgeWidget`
+- `AlertWidget`
+- `ButtonWidget`
+- `IconButtonWidget`
+- `TextInputWidget`
+- `TextAreaWidget`
+- `SliderWidget`
+- `SelectWidget`
+- `OptionWidget`
+- `CheckboxWidget`
+- `DatePickerWidget`
+- `ProgressWidget`
+- `ModalWidget`
+- `ConnectionStatusWidget`
 
 ## FastAPI Integration
 

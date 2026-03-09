@@ -1,5 +1,23 @@
 # Testing and Development
 
+## Quick Test Path After Clone
+
+```bash
+python -m pip install -r requirements-test.txt
+
+# fast smoke path
+python -m pytest tests/unit/test_widgets.py tests/integration/test_fastapi_websocket.py
+
+# full suite
+python -m pytest
+```
+
+Optional Selenium catalog (Chrome required):
+
+```bash
+python -m pytest tests/integration/test_selenium_widgets_catalog.py -q
+```
+
 ## Run all tests
 
 ```bash

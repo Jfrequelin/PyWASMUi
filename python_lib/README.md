@@ -6,6 +6,7 @@ Bibliotheque Python pour piloter un client UI WASM en mode server-driven.
 
 - protocole JSON valide via Pydantic,
 - securite `session_token + HMAC + nonce monotone`,
+- fiabilite transport avec `ack` (event traite) et `receipt` (commande serveur recue),
 - gestion d'une session UI,
 - adaptateurs de transport pour FastAPI et Flask,
 - objet de communication WASM decoupe en :
@@ -16,7 +17,10 @@ Bibliotheque Python pour piloter un client UI WASM en mode server-driven.
 
 - `WasmAppCommunication` : orchestration transport `send_commands(...)` + `receive_events()`.
 - `WasmWidget` : classe mere de tous les widgets.
-- widgets derives : `WindowWidget`, `ContainerWidget`, `LabelWidget`, `ButtonWidget`, `TextInputWidget`, `ListViewWidget`.
+- widgets derives :
+	- layout/content: `WindowWidget`, `ContainerWidget`, `CardWidget`, `StackWidget`, `RowWidget`, `ListViewWidget`, `HeadingWidget`, `ParagraphWidget`, `DividerWidget`, `LabelWidget`
+	- interaction/form: `ButtonWidget`, `IconButtonWidget`, `TextInputWidget`, `TextAreaWidget`, `SliderWidget`, `SelectWidget`, `OptionWidget`, `CheckboxWidget`, `DatePickerWidget`
+	- feedback/state: `BadgeWidget`, `AlertWidget`, `ProgressWidget`, `ModalWidget`, `ConnectionStatusWidget`
 
 ## Installation locale
 

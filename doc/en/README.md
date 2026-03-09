@@ -11,6 +11,13 @@ This section contains the full English documentation for the `pyWasm` project.
 - `doc/en/widgets-and-styling.md`: widgets, styling, and UI patches.
 - `doc/en/testing-and-dev.md`: tests, build, and development workflow.
 
+## Documented Updates
+
+- server -> client acknowledgement flow with `meta.command_id` + `receipt`
+- post-clone quick start path (no mandatory WASM rebuild)
+- per-widget Selenium integration catalog: `tests/integration/test_selenium_widgets_catalog.py`
+- full standard widget catalog
+
 ## Recommended Reading Order
 
 1. `doc/en/getting-started.md`

@@ -4,9 +4,25 @@
 
 - `WindowWidget`
 - `ContainerWidget`
+- `CardWidget`
+- `StackWidget`
+- `RowWidget`
+- `HeadingWidget`
+- `ParagraphWidget`
+- `DividerWidget`
+- `BadgeWidget`
+- `AlertWidget`
 - `LabelWidget`
 - `ButtonWidget`
 - `TextInputWidget`
+- `TextAreaWidget`
+- `SliderWidget`
+- `SelectWidget`
+- `OptionWidget`
+- `CheckboxWidget`
+- `DatePickerWidget`
+- `ProgressWidget`
+- `ModalWidget`
 - `ListViewWidget`
 - `ConnectionStatusWidget`
 
@@ -39,11 +55,11 @@ Regles:
 ## Patching conseille
 
 ```python
-from pywasm_ui import merge_patches, patch_text, patch_style
+from pywasm_ui import merge_patches, set_text, patch_style
 
 patch = merge_patches(
     "label1",
-    patch_text("label1", "Updated"),
+    set_text("label1", "Updated"),
     patch_style("label1", {"font_weight": "700", "color": "#111"}),
 )
 ```
@@ -58,3 +74,8 @@ Le runtime applique:
 - `classes`
 - `attrs` / `remove_attrs`
 - `style`
+
+## Verification integration
+
+- Selenium unitaire par widget: `tests/integration/test_selenium_widgets_catalog.py`
+- Selenium scenarios exemples: `tests/integration/test_selenium_examples.py`

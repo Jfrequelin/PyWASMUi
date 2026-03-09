@@ -52,6 +52,30 @@ Dependances de test:
 python -m pip install -r requirements-test.txt
 ```
 
+## Quick Start Apres Clone
+
+```bash
+git clone https://github.com/Jfrequelin/PyWASMUi.git
+cd PyWASMUi
+
+# runtime + lib locale
+python -m pip install -r server/requirements.txt
+python -m pip install -e python_lib
+
+# dependances de test
+python -m pip install -r requirements-test.txt
+
+# demarrage immediat (WASM deja precompile dans le repo)
+python -m uvicorn server.app.examples.fastapi.fastapi_server:app --host 127.0.0.1 --port 8000
+```
+
+Dans un autre terminal:
+
+```bash
+curl -sS http://127.0.0.1:8000/health
+python -m pytest tests/unit/test_widgets.py tests/integration/test_fastapi_websocket.py
+```
+
 ## Reutilisation en bibliotheque (FastAPI / Flask)
 
 FastAPI :
