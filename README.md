@@ -2,7 +2,9 @@
 
 Framework UI server-driven avec serveur Python (FastAPI), moteur UI Rust/WASM, et bridge JavaScript minimal via WebSocket.
 
-Le frontend est servi directement par FastAPI ou Flask depuis `client/`.
+Le frontend suit un pattern hybride:
+- assets runtime pyWasm (JS + WASM) servis depuis la lib Python (`/pywasm-assets`),
+- pages HTML utilisateur (comme `index.html`) servies depuis votre projet.
 
 Commandes rapides:
 
@@ -85,6 +87,7 @@ from pathlib import Path
 
 from pywasm_ui import (
 	mount_fastapi_frontend,
+	mount_fastapi_packaged_assets,
 	mount_fastapi_websocket,
 	ButtonWidget,
 	EventPayload,
@@ -113,14 +116,17 @@ mount_fastapi_websocket(
 	configure_session=configure,
 )
 
+mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
+
 mount_fastapi_frontend(
 	app,
-	Path("client"),
+	Path("web"),
 	pages={
 		"/": "index.html",
 		"/dashboard": "pages/dashboard.html",
 		"/admin": "pages/admin.html",
 	},
+	reserved_paths=("ws", "health", "pywasm-assets"),
 )
 ```
 
@@ -130,12 +136,18 @@ from pathlib import Path
 
 from flask import Flask
 from flask_sock import Sock
-from pywasm_ui import register_flask_frontend, register_flask_socket
+from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
 
 app = Flask(__name__)
 sock = Sock(app)
 register_flask_socket(sock, path="/ws", server_secret="change-me")
-register_flask_frontend(app, Path("client"), pages={"/admin": "pages/admin.html"})
+register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
+register_flask_frontend(
+	app,
+	Path("web"),
+	pages={"/admin": "pages/admin.html"},
+	reserved_paths=("ws", "health", "pywasm-assets"),
+)
 ```
 
 Communication interne WASM cote serveur :

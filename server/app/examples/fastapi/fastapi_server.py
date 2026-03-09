@@ -21,7 +21,7 @@ from pywasm_ui import (
 from pywasm_ui.protocol import EventPayload
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CLIENT_ROOT = PROJECT_ROOT / "client"
+USER_WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _increment_counter(
@@ -86,6 +86,7 @@ def create_app() -> FastAPI:
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=_build_initial_widgets(),
     )
+    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
 
     @application.get("/health")
     async def health() -> dict[str, str]:
@@ -93,10 +94,11 @@ def create_app() -> FastAPI:
 
     pywasm_ui.fastapi.register_frontend_routes(
         application,
-        CLIENT_ROOT,
+        USER_WEB_ROOT,
         pages={
             "/playground": "index.html",
         },
+        reserved_paths=("ws", "health", "pywasm-assets"),
     )
     return application
 

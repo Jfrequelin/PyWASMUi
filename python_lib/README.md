@@ -9,6 +9,7 @@ Bibliotheque Python pour piloter un client UI WASM en mode server-driven.
 - fiabilite transport avec `ack` (event traite) et `receipt` (commande serveur recue),
 - gestion d'une session UI,
 - adaptateurs de transport pour FastAPI et Flask,
+- assets frontend (JS + WASM) embarques dans la lib Python,
 - objet de communication WASM decoupe en :
 	- envoi de commandes (`WasmCommandSender`),
 	- reception asynchrone d'evenements (`WasmAsyncEventReceiver`).
@@ -54,6 +55,18 @@ mount_fastapi_websocket(
 	],
 	configure_session=configure,
 )
+
+# assets pyWasm servis depuis la lib
+from pathlib import Path
+from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
+
+mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
+mount_fastapi_frontend(
+	app,
+	Path("web"),
+	pages={"/": "index.html"},
+	reserved_paths=("ws", "health", "pywasm-assets"),
+)
 ```
 
 ## Utilisation Flask
@@ -61,11 +74,19 @@ mount_fastapi_websocket(
 ```python
 from flask import Flask
 from flask_sock import Sock
-from pywasm_ui import register_flask_socket
+from pathlib import Path
+from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
 
 app = Flask(__name__)
 sock = Sock(app)
 register_flask_socket(sock, path="/ws", server_secret="change-me")
+register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
+register_flask_frontend(
+	app,
+	Path("web"),
+	pages={"/": "index.html"},
+	reserved_paths=("ws", "health", "pywasm-assets"),
+)
 ```
 
 ## API callbacks

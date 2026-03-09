@@ -108,10 +108,37 @@ from pywasm_ui import patch_style
 patch = patch_style("label1", {"font_size": "20px", "opacity": 0.8})
 ```
 
+## Assets frontend packages et pages custom
+
+Pattern recommande pour distribuer la lib:
+
+- servir les assets runtime pyWasm depuis la lib Python (`/pywasm-assets`),
+- conserver `index.html` et les pages dans le repo de l'application.
+
+```python
+from pathlib import Path
+from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
+
+mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
+
+mount_fastapi_frontend(
+    app,
+    Path("web"),
+    pages={"/": "index.html"},
+    reserved_paths=("ws", "health", "pywasm-assets"),
+)
+```
+
+Dans ton `index.html` (projet utilisateur), charge le runtime package:
+
+```html
+<script type="module" src="/pywasm-assets/src/main.js"></script>
+```
+
 ## Configuration runtime JS (IP/port websocket)
 
-Le client lit automatiquement `client/config/pywasm.runtime.json`.
-Tu peux gerer ce fichier depuis la bibliotheque Python:
+Le client peut toujours lire `pywasm.runtime.json` si ton app expose ce fichier.
+Tu peux le gerer depuis la bibliotheque Python:
 
 ```python
 from pywasm_ui import write_js_runtime_config
@@ -132,9 +159,17 @@ Laisser `ws_host` ou `ws_port` a `None` force le client a reutiliser l'hote/port
 ```python
 from flask import Flask
 from flask_sock import Sock
-from pywasm_ui import register_flask_socket
+from pathlib import Path
+from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
 
 app = Flask(__name__)
 sock = Sock(app)
 register_flask_socket(sock, path="/ws", server_secret="change-me")
+register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
+register_flask_frontend(
+    app,
+    Path("web"),
+    pages={"/": "index.html"},
+    reserved_paths=("ws", "health", "pywasm-assets"),
+)
 ```

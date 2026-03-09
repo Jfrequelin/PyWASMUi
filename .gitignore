@@ -11,6 +11,8 @@ dist/
 **/pkg/
 !client/wasm_ui/pkg/
 !client/wasm_ui/pkg/**
+!python_lib/pywasm_ui/frontend/wasm_ui/pkg/
+!python_lib/pywasm_ui/frontend/wasm_ui/pkg/**
 
 # Editors/OS
 .vscode/

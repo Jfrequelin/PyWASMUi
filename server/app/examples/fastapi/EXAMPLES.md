@@ -2,6 +2,11 @@
 
 Progressive examples to learn pyWasm usage patterns.
 
+Shared frontend pattern used by examples:
+
+- pyWasm runtime assets are served from package route `/pywasm-assets`,
+- user page is `server/app/examples/web/index.html`.
+
 ## 01. Single widget
 
 File: `server/app/examples/fastapi/01_single_widget_fastapi.py`

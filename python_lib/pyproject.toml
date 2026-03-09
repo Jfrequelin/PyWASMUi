@@ -32,3 +32,14 @@ package-dir = {"" = "."}
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["pywasm_ui*"]
+
+[tool.setuptools.package-data]
+pywasm_ui = [
+  "py.typed",
+  "frontend/**/*.html",
+  "frontend/**/*.js",
+  "frontend/**/*.css",
+  "frontend/**/*.json",
+  "frontend/**/*.wasm",
+  "frontend/**/*.d.ts",
+]

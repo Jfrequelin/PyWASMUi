@@ -12,6 +12,7 @@ from .communication import (
     FastAPIWasmCommandSender,
     WasmAppCommunication,
 )
+from .frontend_assets import get_packaged_frontend_root
 from .session import ProtocolViolationError, PyWasmSession, create_session_factory
 from .widgets import WasmWidget
 
@@ -21,9 +22,11 @@ FileResponse = None
 JSONResponse = None
 jsonify = None
 send_from_directory = None
+StaticFiles = None
 
 if TYPE_CHECKING:
     from fastapi import WebSocket
+    from fastapi.staticfiles import StaticFiles
     from pywasm_ui.style_template import StyleTemplate
     from fastapi.responses import FileResponse, JSONResponse
     from flask import jsonify, send_from_directory
@@ -32,11 +35,13 @@ else:
     try:
         from fastapi import WebSocket
         from fastapi.responses import FileResponse, JSONResponse
+        from fastapi.staticfiles import StaticFiles
         from starlette.websockets import WebSocketDisconnect
     except ImportError:  # pragma: no cover - optional dependency fallback
         WebSocket = Any  # type: ignore[misc,assignment]
         FileResponse = None
         JSONResponse = None
+        StaticFiles = None
 
         class WebSocketDisconnect(Exception):
             """Fallback exception type when Starlette/FastAPI is unavailable."""
@@ -108,6 +113,17 @@ def _prepare_frontend_mount(
     }
     excluded = {value.strip("/") for value in reserved_paths if value.strip("/")}
     return root, route_to_file, excluded
+
+
+def _normalize_route_prefix(route_prefix: str) -> str:
+    value = route_prefix.strip()
+    if not value:
+        raise ValueError("route_prefix must not be empty")
+    if not value.startswith("/"):
+        value = f"/{value}"
+    if len(value) > 1 and value.endswith("/"):
+        value = value.rstrip("/")
+    return value
 
 
 def mount_fastapi_frontend(  # pylint: disable=too-many-locals
@@ -282,6 +298,50 @@ def register_flask_frontend(  # pylint: disable=too-many-locals
         return jsonify_fn({"error": "not-found"}), 404
 
 
+def mount_fastapi_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
+    """Mount packaged pyWasm frontend assets on a FastAPI app."""
+
+    if StaticFiles is None:
+        raise RuntimeError("FastAPI StaticFiles is unavailable")
+
+    normalized = _normalize_route_prefix(route_prefix)
+    root = get_packaged_frontend_root()
+    static_files = cast(Callable[..., object], StaticFiles)
+    app.mount(  # type: ignore[attr-defined]
+        normalized,
+        static_files(directory=str(root)),
+        name="pywasm-assets",
+    )
+    return root
+
+
+def register_flask_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
+    """Expose packaged pyWasm frontend assets under a Flask route prefix."""
+
+    if send_from_directory is None:
+        raise RuntimeError("Flask response helpers are unavailable")
+
+    normalized = _normalize_route_prefix(route_prefix)
+    root = get_packaged_frontend_root()
+    send_from_directory_fn = cast(Callable[..., object], send_from_directory)
+    endpoint_suffix = normalized.strip("/").replace("/", "_")
+
+    @app.get(f"{normalized}/<path:asset_path>")  # type: ignore[attr-defined]
+    def _packaged_asset(asset_path: str) -> object:
+        target = _resolve_static_file(root, asset_path)
+        if target is None:
+            return {"error": "not-found"}, 404
+        return send_from_directory_fn(str(root), asset_path)
+
+    @app.get(normalized)  # type: ignore[attr-defined]
+    def _packaged_asset_root() -> object:
+        return {"error": "not-found", "hint": f"Use {normalized}/<file>"}, 404
+
+    _packaged_asset.__name__ = f"_packaged_asset_{endpoint_suffix}"
+    _packaged_asset_root.__name__ = f"_packaged_asset_root_{endpoint_suffix}"
+    return root
+
+
 class FastAPIAdapter:
     """Object facade for FastAPI integration helpers."""
 
@@ -324,6 +384,14 @@ class FastAPIAdapter:
             reserved_paths=reserved_paths,
             spa_fallback=spa_fallback,
         )
+
+    def register_packaged_assets(
+        self,
+        app: object,
+        *,
+        route_prefix: str = "/pywasm-assets",
+    ) -> Path:
+        return mount_fastapi_packaged_assets(app, route_prefix=route_prefix)
 
     def register_websocket_endpoint(
         self,
@@ -430,6 +498,14 @@ class FlaskAdapter:
             reserved_paths=reserved_paths,
             spa_fallback=spa_fallback,
         )
+
+    def register_packaged_assets(
+        self,
+        app: object,
+        *,
+        route_prefix: str = "/pywasm-assets",
+    ) -> Path:
+        return register_flask_packaged_assets(app, route_prefix=route_prefix)
 
     def register_websocket_endpoint(
         self,

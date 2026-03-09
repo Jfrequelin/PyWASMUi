@@ -80,16 +80,19 @@ library helper:
 
 ```python
 from pathlib import Path
-from pywasm_ui import mount_fastapi_frontend
+from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
+
+mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
 
 mount_fastapi_frontend(
 	app,
-	Path("client"),
+	Path("web"),
 	pages={
 		"/": "index.html",
 		"/dashboard": "pages/dashboard.html",
 		"/settings": "pages/settings.html",
 	},
+	reserved_paths=("ws", "health", "pywasm-assets"),
 )
 ```
 

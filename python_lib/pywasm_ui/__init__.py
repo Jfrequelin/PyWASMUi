@@ -2,13 +2,16 @@ from .adapters import (
     FastAPIAdapter,
     FlaskAdapter,
     PyWasmUI,
+    mount_fastapi_packaged_assets,
     mount_fastapi_frontend,
     mount_fastapi_socket,
     mount_fastapi_websocket,
     pywasm_ui,
+    register_flask_packaged_assets,
     register_flask_frontend,
     register_flask_socket,
 )
+from .frontend_assets import get_packaged_frontend_root
 from .js_runtime_config import JsRuntimeConfig, render_embed_snippet, write_js_runtime_config
 from .communication import (
     FastAPIWasmAsyncReceiver,
@@ -135,8 +138,11 @@ __all__ = [
     "mount_fastapi_websocket",
     "mount_fastapi_socket",
     "mount_fastapi_frontend",
+    "mount_fastapi_packaged_assets",
     "register_flask_socket",
     "register_flask_frontend",
+    "register_flask_packaged_assets",
+    "get_packaged_frontend_root",
     "render_embed_snippet",
     "write_js_runtime_config",
 ]

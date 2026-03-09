@@ -19,26 +19,10 @@ from pywasm_ui import (
     patch_style,
     pywasm_ui,
     set_text,
-    write_js_runtime_config,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CLIENT_ROOT = PROJECT_ROOT / "client"
-RUNTIME_CONFIG_PATH = CLIENT_ROOT / "config" / "pywasm.runtime.json"
-
-
-def _configure_runtime_config() -> None:
-    ws_host = os.getenv("PYWASM_WS_HOST")
-    ws_port_raw = os.getenv("PYWASM_WS_PORT")
-    ws_port = int(ws_port_raw) if ws_port_raw else 8001
-    ws_protocol = os.getenv("PYWASM_WS_PROTOCOL")
-    write_js_runtime_config(
-        RUNTIME_CONFIG_PATH,
-        ws_host=ws_host,
-        ws_port=ws_port,
-        ws_path="/ws",
-        ws_protocol=ws_protocol,
-    )
+USER_WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _increment_counter(
@@ -69,7 +53,7 @@ def _on_increment_2(session: PyWasmSession, _event: EventPayload) -> dict[str, A
 def _build_initial_widgets() -> list[WasmWidget]:
     label_style = Style(font_size="20px", color="#1f2937")
     button_style_1 = Style(background_color="#0ea5e9", border="none", padding="10px 16px")
-    button_style_2 = Style(background_color="#14b8a6", border="none", padding="10px 16px")
+    button_style_2 = Style(background_color="#b314b8", border="none", padding="10px 16px")
 
     return [
         LabelWidget(id="label1", parent="root", text="0", style=label_style),
@@ -94,8 +78,6 @@ def _build_initial_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> Flask:
-    _configure_runtime_config()
-
     application = Flask(__name__)
     sock = Sock(application)
     pywasm_ui.flask.register_websocket_endpoint(
@@ -104,6 +86,7 @@ def create_app() -> Flask:
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=_build_initial_widgets(),
     )
+    pywasm_ui.flask.register_packaged_assets(application, route_prefix="/pywasm-assets")
 
     @application.get("/health")
     def health() -> tuple[Response, int]:
@@ -111,10 +94,11 @@ def create_app() -> Flask:
 
     pywasm_ui.flask.register_frontend_routes(
         application,
-        CLIENT_ROOT,
+        USER_WEB_ROOT,
         pages={
             "/playground": "index.html",
         },
+        reserved_paths=("ws", "health", "pywasm-assets"),
     )
     return application
 

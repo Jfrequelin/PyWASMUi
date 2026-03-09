@@ -1,0 +1,11 @@
+{
+	"websocket": {
+		"host": null,
+		"port": null,
+		"path": "/ws",
+		"protocol": null
+	},
+	"mount": {
+		"elementId": "app"
+	}
+}
