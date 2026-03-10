@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,22 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return int(str(value))
     except (TypeError, ValueError):
         return default
+
+
+@dataclass
+class InteractiveWidgets:
+    name_input: WasmWidget
+    btn_1: WasmWidget
+    btn_2: WasmWidget
+    btn_icon: WasmWidget
+    slider_volume: WasmWidget
+    textarea_notes: WasmWidget
+    btn_add_row: WasmWidget
+    checkbox_terms: WasmWidget
+    date_input: WasmWidget
+    category_select: WasmWidget
+    progress_btn: WasmWidget
+    modal_btn: WasmWidget
 
 
 def _on_delete_row(row_id: str):
@@ -233,7 +250,7 @@ def on_notes_change(session: PyWasmSession, event: EventPayload) -> CallbackResp
     return session.update("paragraph_notes", text=f"Notes preview: {preview}")
 
 
-def _build_interactive_widgets() -> dict[str, WasmWidget]:
+def _build_interactive_widgets() -> InteractiveWidgets:
     name_input = TextInputWidget(id="input_name", parent="stack_main", value="")
     name_input.on_change(on_name_change)
 
@@ -306,37 +323,24 @@ def _build_interactive_widgets() -> dict[str, WasmWidget]:
         on_click=on_modal_toggle,
     )
 
-    return {
-        "name_input": name_input,
-        "btn_1": btn_1,
-        "btn_2": btn_2,
-        "btn_icon": btn_icon,
-        "slider_volume": slider_volume,
-        "textarea_notes": textarea_notes,
-        "btn_add_row": btn_add_row,
-        "checkbox_terms": checkbox_terms,
-        "date_input": date_input,
-        "category_select": category_select,
-        "progress_btn": progress_btn,
-        "modal_btn": modal_btn,
-    }
+    return InteractiveWidgets(
+        name_input=name_input,
+        btn_1=btn_1,
+        btn_2=btn_2,
+        btn_icon=btn_icon,
+        slider_volume=slider_volume,
+        textarea_notes=textarea_notes,
+        btn_add_row=btn_add_row,
+        checkbox_terms=checkbox_terms,
+        date_input=date_input,
+        category_select=category_select,
+        progress_btn=progress_btn,
+        modal_btn=modal_btn,
+    )
 
 
-def _build_initial_widgets() -> list[WasmWidget]:
-    widgets = _build_interactive_widgets()
+def _build_showcase_header(widgets: InteractiveWidgets) -> list[WasmWidget]:
     return [
-        ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"),
-        WindowWidget(
-            id="window_main",
-            parent="root",
-            style=Style(max_width="960px", margin="0 auto"),
-        ),
-        CardWidget(
-            id="card_main",
-            parent="window_main",
-            style=Style(padding="16px", border="1px solid #dbe2ea", border_radius="12px"),
-        ),
-        StackWidget(id="stack_main", parent="card_main", gap="12px"),
         HeadingWidget(id="heading_title", parent="stack_main", text="Widget Showcase", level=2),
         ParagraphWidget(
             id="paragraph_intro",
@@ -347,22 +351,27 @@ def _build_initial_widgets() -> list[WasmWidget]:
         RowWidget(id="row_actions", parent="stack_main", gap="10px"),
         BadgeWidget(id="badge_state", parent="row_actions", text="Ready", variant="info"),
         LabelWidget(id="label_count_1", parent="row_actions", text="Count A: 0"),
-        widgets["btn_1"],
+        widgets.btn_1,
         LabelWidget(id="label_count_2", parent="row_actions", text="Count B: 0"),
-        widgets["btn_2"],
-        widgets["btn_icon"],
+        widgets.btn_2,
+        widgets.btn_icon,
         AlertWidget(id="alert_status", parent="stack_main", text="No alert", level="info"),
-        widgets["name_input"],
+    ]
+
+
+def _build_interaction_section(widgets: InteractiveWidgets) -> list[WasmWidget]:
+    return [
+        widgets.name_input,
         ParagraphWidget(id="paragraph_name", parent="stack_main", text="Name preview:"),
-        widgets["slider_volume"],
+        widgets.slider_volume,
         ParagraphWidget(id="paragraph_slider", parent="stack_main", text="Slider value: 20"),
-        widgets["textarea_notes"],
+        widgets.textarea_notes,
         ParagraphWidget(id="paragraph_notes", parent="stack_main", text="Notes preview:"),
-        widgets["checkbox_terms"],
+        widgets.checkbox_terms,
         LabelWidget(id="checkbox_value", parent="stack_main", text="Accepted: False"),
-        widgets["date_input"],
+        widgets.date_input,
         LabelWidget(id="date_value", parent="stack_main", text="Date: 2026-03-09"),
-        widgets["category_select"],
+        widgets.category_select,
         OptionWidget(
             id="category_alpha",
             parent="category_select",
@@ -373,8 +382,8 @@ def _build_initial_widgets() -> list[WasmWidget]:
         OptionWidget(id="category_beta", parent="category_select", text="Beta", value="beta"),
         LabelWidget(id="select_value", parent="stack_main", text="Select changed: 0"),
         ProgressWidget(id="task_progress", parent="stack_main", value=25, max_value=100),
-        widgets["progress_btn"],
-        widgets["modal_btn"],
+        widgets.progress_btn,
+        widgets.modal_btn,
         ModalWidget(
             id="info_modal",
             parent="stack_main",
@@ -382,6 +391,11 @@ def _build_initial_widgets() -> list[WasmWidget]:
             is_open=False,
             style=Style(border="1px solid #94a3b8", padding="12px"),
         ),
+    ]
+
+
+def _build_features_section() -> list[WasmWidget]:
+    return [
         ListViewWidget(
             id="list_features",
             parent="stack_main",
@@ -393,6 +407,11 @@ def _build_initial_widgets() -> list[WasmWidget]:
         LabelWidget(id="list_item_2_text", parent="list_item_2", text="- Python callbacks"),
         ContainerWidget(id="list_item_3", parent="list_features"),
         LabelWidget(id="list_item_3_text", parent="list_item_3", text="- WS pending/ack flow"),
+    ]
+
+
+def _build_dynamic_table_section(widgets: InteractiveWidgets) -> list[WasmWidget]:
+    return [
         DividerWidget(id="divider_table", parent="stack_main"),
         HeadingWidget(id="heading_table", parent="stack_main", text="Tableau dynamique", level=3),
         ParagraphWidget(
@@ -410,7 +429,29 @@ def _build_initial_widgets() -> list[WasmWidget]:
         ),
         *_build_table_row_widgets("table_row_1", "table_rows", "Ligne 1"),
         *_build_table_row_widgets("table_row_2", "table_rows", "Ligne 2"),
-        widgets["btn_add_row"],
+        widgets.btn_add_row,
+    ]
+
+
+def _build_initial_widgets() -> list[WasmWidget]:
+    widgets = _build_interactive_widgets()
+    return [
+        ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"),
+        WindowWidget(
+            id="window_main",
+            parent="root",
+            style=Style(max_width="960px", margin="0 auto"),
+        ),
+        CardWidget(
+            id="card_main",
+            parent="window_main",
+            style=Style(padding="16px", border="1px solid #dbe2ea", border_radius="12px"),
+        ),
+        StackWidget(id="stack_main", parent="card_main", gap="12px"),
+        *_build_showcase_header(widgets),
+        *_build_interaction_section(widgets),
+        *_build_features_section(),
+        *_build_dynamic_table_section(widgets),
     ]
 
 
