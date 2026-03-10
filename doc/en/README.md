@@ -1,6 +1,6 @@
-# pyWasm Documentation (EN)
+# PyWASMui Documentation (EN)
 
-This section contains the full English documentation for the `pyWasm` project.
+This section contains the full English documentation for the `PyWASMui` project.
 
 ## Contents
 

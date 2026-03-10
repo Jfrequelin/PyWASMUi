@@ -56,7 +56,7 @@ mount_fastapi_websocket(
 	configure_session=configure,
 )
 
-# assets pyWasm servis depuis la lib
+# assets PyWASMui servis depuis la lib
 from pathlib import Path
 from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
 

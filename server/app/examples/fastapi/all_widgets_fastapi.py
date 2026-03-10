@@ -456,7 +456,7 @@ def _build_initial_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="pyWasm all-widgets example")
+    application = FastAPI(title="PyWASMui all-widgets example")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,
         path="/ws",

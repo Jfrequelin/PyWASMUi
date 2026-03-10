@@ -66,7 +66,7 @@ def render_embed_snippet(
 ) -> str:
     """Return an embeddable HTML snippet for Jinja2 templates.
 
-    This lets users keep their own page/layout and inject pyWasm with one div
+    This lets users keep their own page/layout and inject PyWASMui with one div
     plus a module script.
     """
 

@@ -1,10 +1,10 @@
 # FastAPI Example Series
 
-Progressive examples to learn pyWasm usage patterns.
+Progressive examples to learn PyWASMui usage patterns.
 
 Shared frontend pattern used by examples:
 
-- pyWasm runtime assets are served from package route `/pywasm-assets`,
+- PyWASMui runtime assets are served from package route `/pywasm-assets`,
 - user page is `server/app/examples/web/index.html`.
 
 ## 01. Single widget

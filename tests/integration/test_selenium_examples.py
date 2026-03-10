@@ -22,7 +22,7 @@ EXAMPLE_CASES = [
         "framework": "fastapi",
         "target": "server.app.examples.fastapi:example_01_app",
         "initial_id": "hello_label",
-        "initial_text": "Hello from pyWasm",
+        "initial_text": "Hello from PyWASMui",
         "click_id": "add_widget_btn",
         "after_id": "dynamic_label_1",
         "after_text": "Dynamic widget #1",

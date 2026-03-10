@@ -112,7 +112,7 @@ patch = patch_style("label1", {"font_size": "20px", "opacity": 0.8})
 
 Recommended distribution pattern:
 
-- serve pyWasm runtime assets from the Python package (`/pywasm-assets`),
+- serve PyWASMui runtime assets from the Python package (`/pywasm-assets`),
 - keep your own `index.html` and pages in your app repository.
 
 ```python

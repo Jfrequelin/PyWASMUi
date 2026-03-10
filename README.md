@@ -1,9 +1,9 @@
-# pyWasm
+# PyWASMui
 
 Framework UI server-driven avec serveur Python (FastAPI), moteur UI Rust/WASM, et bridge JavaScript minimal via WebSocket.
 
 Le frontend suit un pattern hybride:
-- assets runtime pyWasm (JS + WASM) servis depuis la lib Python (`/pywasm-assets`),
+- assets runtime PyWASMui (JS + WASM) servis depuis la lib Python (`/pywasm-assets`),
 - pages HTML utilisateur (comme `index.html`) servies depuis votre projet.
 
 Commandes rapides:
@@ -57,8 +57,8 @@ python -m pip install -r requirements-test.txt
 ## Quick Start Apres Clone
 
 ```bash
-git clone https://github.com/Jfrequelin/PyWASMUi.git
-cd PyWASMUi
+git clone https://github.com/Jfrequelin/PyWASMui.git
+cd PyWASMui
 
 # runtime + lib locale
 python -m pip install -r server/requirements.txt
@@ -159,7 +159,7 @@ Communication interne WASM cote serveur :
 
 Si vous voulez garder vos templates/pages existants (Jinja2, HTMX, etc.),
 vous pouvez simplement injecter le widget runtime dans un `div` sans deleguer
-tout le routage frontend a pyWasm.
+tout le routage frontend a PyWASMui.
 
 FastAPI + Jinja2 :
 

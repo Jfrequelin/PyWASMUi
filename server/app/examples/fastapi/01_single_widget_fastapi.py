@@ -27,13 +27,13 @@ def _on_add_widget(session: PyWasmSession) -> list[CallbackResponse]:
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="pyWasm example 01 - single widget")
+    application = FastAPI(title="PyWASMui example 01 - single widget")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,
         path="/ws",
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=[
-            LabelWidget(id="hello_label", parent="root", text="Hello from pyWasm"),
+            LabelWidget(id="hello_label", parent="root", text="Hello from PyWASMui"),
             ButtonWidget(id="add_widget_btn", parent="root", text="Add dynamic widget"),
         ],
         configure_session=lambda session: session.on_click("add_widget_btn", _on_add_widget),

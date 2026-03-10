@@ -2,7 +2,7 @@
 
 ## Vue globale
 
-`pyWasm` implemente un modele **server-driven UI**:
+`PyWASMui` implemente un modele **server-driven UI**:
 
 - Le serveur Python pilote la structure et les mises a jour UI.
 - Le runtime WASM Rust rend le DOM et applique les patchs.

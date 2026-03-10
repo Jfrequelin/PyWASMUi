@@ -299,7 +299,7 @@ def register_flask_frontend(  # pylint: disable=too-many-locals
 
 
 def mount_fastapi_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
-    """Mount packaged pyWasm frontend assets on a FastAPI app."""
+    """Mount packaged PyWASMui frontend assets on a FastAPI app."""
 
     if StaticFiles is None:
         raise RuntimeError("FastAPI StaticFiles is unavailable")
@@ -316,7 +316,7 @@ def mount_fastapi_packaged_assets(app: object, *, route_prefix: str = "/pywasm-a
 
 
 def register_flask_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
-    """Expose packaged pyWasm frontend assets under a Flask route prefix."""
+    """Expose packaged PyWASMui frontend assets under a Flask route prefix."""
 
     if send_from_directory is None:
         raise RuntimeError("Flask response helpers are unavailable")
@@ -551,7 +551,7 @@ class FlaskAdapter:
 
 
 class PyWasmUI:
-    """Unified object entrypoint for pyWasm framework integration."""
+    """Unified object entrypoint for PyWASMui framework integration."""
 
     def __init__(self) -> None:
         self.fastapi = FastAPIAdapter()

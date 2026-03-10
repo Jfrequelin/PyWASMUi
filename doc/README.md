@@ -1,4 +1,4 @@
-# pyWasm Documentation
+# PyWASMui Documentation
 
 Ce dossier contient deux versions completes de la documentation:
 

@@ -137,7 +137,7 @@ def _build_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="pyWasm form-controls example")
+    application = FastAPI(title="PyWASMui form-controls example")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,
         path="/ws",

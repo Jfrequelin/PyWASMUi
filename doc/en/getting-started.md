@@ -19,8 +19,8 @@ python -m pip install -e python_lib
 ## Quick Start After Clone
 
 ```bash
-git clone https://github.com/Jfrequelin/PyWASMUi.git
-cd PyWASMUi
+git clone https://github.com/Jfrequelin/PyWASMui.git
+cd PyWASMui
 
 python -m pip install -r server/requirements.txt
 python -m pip install -e python_lib
@@ -99,7 +99,7 @@ mount_fastapi_frontend(
 ## Jinja2 Integration (keep your existing pages)
 
 To keep your existing Jinja2 templates and other frontend libraries, inject a
-small pyWasm block into your page:
+small PyWASMui block into your page:
 
 ```python
 from pywasm_ui import mount_fastapi_websocket, render_embed_snippet

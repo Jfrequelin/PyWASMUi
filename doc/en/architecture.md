@@ -2,7 +2,7 @@
 
 ## High-Level View
 
-`pyWasm` uses a **server-driven UI** model:
+`PyWASMui` uses a **server-driven UI** model:
 
 - The Python server drives UI structure and updates.
 - The Rust/WASM runtime renders DOM and applies patches.

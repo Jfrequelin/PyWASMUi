@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def get_packaged_frontend_root() -> Path:
-    """Return the directory that contains packaged pyWasm frontend assets."""
+    """Return the directory that contains packaged PyWASMui frontend assets."""
 
     root = Path(__file__).resolve().parent / "frontend"
     if not root.exists():
