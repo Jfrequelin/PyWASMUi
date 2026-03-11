@@ -126,7 +126,7 @@ def _normalize_route_prefix(route_prefix: str) -> str:
     return value
 
 
-def mount_fastapi_frontend(  # pylint: disable=too-many-locals
+def mount_fastapi_frontend(
     app: object,
     client_root: str | Path,
     *,
@@ -207,7 +207,7 @@ def mount_fastapi_frontend(  # pylint: disable=too-many-locals
         return json_response(status_code=404, content={"error": "not-found"})
 
 
-def register_flask_frontend(  # pylint: disable=too-many-locals
+def register_flask_frontend(
     app: object,
     client_root: str | Path,
     *,

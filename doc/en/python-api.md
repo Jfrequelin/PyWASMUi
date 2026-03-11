@@ -9,12 +9,15 @@
 - `register_flask_frontend(app, ...)`
 - adapters: `pywasm_ui.fastapi`, `pywasm_ui.flask`
 - `PyWasmSession`
-- standard widgets (full list below)
+- HTML widgets (full list below)
 - styling: `Style`
 - patch helpers: `set_text`, `patch_value`, `patch_enabled`, `patch_classes`, `patch_attrs`, `patch_remove_attrs`, `patch_style`, `merge_patches`
 - snippets/runtime: `render_embed_snippet`, `write_js_runtime_config`
+- typed events: `to_typed_event`, `ClickEvent`, `TextInputChangeEvent`, `SliderChangeEvent`
+- theme: `ThemeTokens`, `apply_theme`
+- lightweight routing: `page`, `register_fastapi_pages`, `register_flask_pages`
 
-## Full Standard Widget Catalog
+## Full HTML Widget Catalog
 
 - `WindowWidget`
 - `ContainerWidget`
@@ -75,6 +78,24 @@ mount_fastapi_websocket(
 - `session.set_default_event_handler(handler)`
 - `session.data` for per-session business state
 
+Typed event helpers:
+
+- `session.on_click_typed(widget_or_id, handler)`
+- `session.on_change_typed(widget_or_id, handler)`
+
+```python
+from pywasm_ui import ClickEvent, TextInputChangeEvent
+
+def on_click(session: PyWasmSession, event: ClickEvent):
+    return {"id": "status", "text": f"clicked: {event.widget_id}"}
+
+def on_change(session: PyWasmSession, event: TextInputChangeEvent):
+    return {"id": "preview", "text": event.text}
+
+session.on_click_typed("btn1", on_click)
+session.on_change_typed("input1", on_change)
+```
+
 Handlers can return:
 
 - patch dict (`{"id": ..., ...}`)
@@ -106,6 +127,25 @@ button.style.clear()
 from pywasm_ui import patch_style
 
 patch = patch_style("label1", {"font_size": "20px", "opacity": 0.8})
+```
+
+## Theme Tokens
+
+Use `apply_theme` to configure default styles per widget kind/class at session scope.
+
+```python
+from pywasm_ui import ThemeTokens, apply_theme
+
+apply_theme(session)  # default theme
+
+apply_theme(
+    session,
+    ThemeTokens(
+        primary_color="#ff006e",
+        primary_contrast_color="#ffffff",
+        border_radius="10px",
+    ),
+)
 ```
 
 ## Packaged frontend assets and custom pages
@@ -171,5 +211,24 @@ register_flask_frontend(
     Path("web"),
     pages={"/": "index.html"},
     reserved_paths=("ws", "health", "pywasm-assets"),
+)
+```
+
+## Lightweight Python Routing (Multipage + Guard)
+
+```python
+from pathlib import Path
+from fastapi import FastAPI
+from pywasm_ui import page, register_fastapi_pages
+
+app = FastAPI()
+
+register_fastapi_pages(
+    app,
+    Path("web"),
+    [
+        page("/", "index.html"),
+        page("/admin", "admin.html", guard=lambda request: request.headers.get("x-admin") == "1"),
+    ],
 )
 ```

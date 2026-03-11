@@ -1,50 +1,60 @@
 # FastAPI Example Series
 
-Progressive examples to learn PyWASMui usage patterns.
+Progressive examples that showcase server-driven UI patterns with PyWASMui.
 
-Shared frontend pattern used by examples:
+Common setup used by these examples:
 
-- PyWASMui runtime assets are served from package route `/pywasm-assets`,
-- user page is `server/app/examples/web/index.html`.
+- Websocket endpoint at `/ws`
+- Runtime assets at `/pywasm-assets`
+- Frontend page from `server/app/examples/web/index.html`
+- Health probe at `/health`
 
-## 01. Single widget
+## 01. Single Widget
 
 File: `server/app/examples/fastapi/01_single_widget_fastapi.py`
-
-Run:
 
 ```bash
 python -m uvicorn server.app.examples.fastapi.01_single_widget_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
-## 02. Widget composition (parent/child)
+## 02. Widget Composition
 
 File: `server/app/examples/fastapi/02_widget_composition_fastapi.py`
-
-Run:
 
 ```bash
 python -m uvicorn server.app.examples.fastapi.02_widget_composition_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
-## 03. Style update at runtime
+## 03. Runtime Style Updates
 
 File: `server/app/examples/fastapi/03_style_updates_fastapi.py`
-
-Run:
 
 ```bash
 python -m uvicorn server.app.examples.fastapi.03_style_updates_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
-## 04. Shared template reused across apps
+## 04. Shared Style Template
 
 File: `server/app/examples/fastapi/04_style_template_fastapi.py`
 
-Template file: `server/app/examples/fastapi/shared_style_template.json`
-
-Run:
+Template: `server/app/examples/fastapi/shared_style_template.json`
 
 ```bash
 python -m uvicorn server.app.examples.fastapi.04_style_template_fastapi:app --host 127.0.0.1 --port 8000
+```
+
+## 05. Form Controls
+
+File: `server/app/examples/fastapi/05_form_controls_fastapi.py`
+
+```bash
+python -m uvicorn server.app.examples.fastapi.05_form_controls_fastapi:app --host 127.0.0.1 --port 8000
+```
+
+## 06. All Widgets Showcase
+
+File: `server/app/examples/fastapi/all_widgets_fastapi.py`
+
+```bash
+python -m uvicorn server.app.examples.fastapi.all_widgets_fastapi:app --host 127.0.0.1 --port 8000
 ```

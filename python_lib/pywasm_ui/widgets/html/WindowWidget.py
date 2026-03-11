@@ -3,30 +3,23 @@ from __future__ import annotations
 from typing import Any
 
 from ..base import Style, WasmWidget
-from ._common import init_standard_widget
+from ._common import html_widget_kind, init_standard_widget
 
 
-class AlertWidget(WasmWidget):  # pylint: disable=super-init-not-called
-    def __init__(  # pylint: disable=super-init-not-called
+class WindowWidget(WasmWidget):
+    def __init__(
         self,
         id: str,
         parent: str = "root",
-        text: str = "Alert",
-        level: str = "info",
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
+        super().__init__(id=id, kind=html_widget_kind(self), parent=parent, props={}, children=[])
         init_standard_widget(
             self,
             id=id,
-            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
             tag="div",
-            text_prop="text",
-            defaults={
-                "text": text,
-                "classes": ["alert", f"alert-{level}"],
-            },
             props=props,
             style=style,
         )

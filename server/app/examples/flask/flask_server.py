@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from pathlib import Path
 from typing import Any
@@ -53,7 +51,7 @@ def _on_increment_2(session: PyWasmSession, _event: EventPayload) -> dict[str, A
 def _build_initial_widgets() -> list[WasmWidget]:
     label_style = Style(font_size="20px", color="#1f2937")
     button_style_1 = Style(background_color="#0ea5e9", border="none", padding="10px 16px")
-    button_style_2 = Style(background_color="#b314b8", border="none", padding="10px 16px")
+    button_style_2 = Style(background_color="#14b8a6", border="none", padding="10px 16px")
 
     return [
         LabelWidget(id="label1", parent="root", text="0", style=label_style),

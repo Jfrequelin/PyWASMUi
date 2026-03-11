@@ -1,43 +1,30 @@
-from .AlertWidget import AlertWidget
-from .BadgeWidget import BadgeWidget
-from .ButtonWidget import ButtonWidget
-from .CardWidget import CardWidget
-from .CheckboxWidget import CheckboxWidget
-from .ContainerWidget import ContainerWidget
-from .DatePickerWidget import DatePickerWidget
-from .DividerWidget import DividerWidget
-from .HeadingWidget import HeadingWidget
-from .IconButtonWidget import IconButtonWidget
-from .LabelWidget import LabelWidget
-from .ListViewWidget import ListViewWidget
-from .ModalWidget import ModalWidget
-from .OptionWidget import OptionWidget
-from .ParagraphWidget import ParagraphWidget
-from .ProgressWidget import ProgressWidget
-from .RowWidget import RowWidget
-from .SelectWidget import SelectWidget
-from .SliderWidget import SliderWidget
-from .StackWidget import StackWidget
-from .TextAreaWidget import TextAreaWidget
-from .TextInputWidget import TextInputWidget
-from .WindowWidget import WindowWidget
+"""Backward-compatible alias for the HTML widget package."""
 
-__all__ = [
+from importlib import import_module
+import sys
+
+from ..html import *  # noqa: F403
+from ..html import __all__
+
+# Keep direct submodule imports working, e.g.
+# `from pywasm_ui.widgets.standard.ButtonWidget import ButtonWidget`.
+_LEGACY_MODULES = [
+    "_common",
     "AlertWidget",
     "BadgeWidget",
+    "ButtonWidget",
     "CardWidget",
     "CheckboxWidget",
-    "WindowWidget",
     "ContainerWidget",
     "DatePickerWidget",
     "DividerWidget",
     "HeadingWidget",
     "IconButtonWidget",
     "LabelWidget",
-    "ButtonWidget",
-    "ParagraphWidget",
+    "ListViewWidget",
     "ModalWidget",
     "OptionWidget",
+    "ParagraphWidget",
     "ProgressWidget",
     "RowWidget",
     "SelectWidget",
@@ -45,5 +32,8 @@ __all__ = [
     "StackWidget",
     "TextAreaWidget",
     "TextInputWidget",
-    "ListViewWidget",
+    "WindowWidget",
 ]
+
+for _name in _LEGACY_MODULES:
+    sys.modules[f"{__name__}.{_name}"] = import_module(f"..html.{_name}", package=__name__)

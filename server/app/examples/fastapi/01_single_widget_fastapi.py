@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from pathlib import Path
 
@@ -8,21 +6,21 @@ from fastapi import FastAPI
 from pywasm_ui import CallbackResponse, ButtonWidget, LabelWidget, PyWasmSession, pywasm_ui
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CLIENT_ROOT = PROJECT_ROOT / "client"
+WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _on_add_widget(session: PyWasmSession) -> list[CallbackResponse]:
-    current = int(session.data.get("dynamic_widget_count", 0)) + 1
-    session.data["dynamic_widget_count"] = current
+    next_index = int(session.data.get("dynamic_widget_count", 0)) + 1
+    session.data["dynamic_widget_count"] = next_index
 
     dynamic_label = LabelWidget(
-        id=f"dynamic_label_{current}",
+        id=f"dynamic_label_{next_index}",
         parent="root",
-        text=f"Dynamic widget #{current}",
+        text=f"Dynamic widget #{next_index}",
     )
     return [
         session.create(dynamic_label),
-        session.update("add_widget_btn", text=f"Add another ({current})"),
+        session.update("add_widget_btn", text=f"Add another ({next_index})"),
     ]
 
 
@@ -43,7 +41,13 @@ def create_app() -> FastAPI:
     async def health() -> dict[str, str]:
         return {"status": "ok", "example": "01_single_widget"}
 
-    pywasm_ui.fastapi.register_frontend_routes(application, CLIENT_ROOT)
+    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
+    pywasm_ui.fastapi.register_frontend_routes(
+        application,
+        WEB_ROOT,
+        pages={"/": "index.html"},
+        reserved_paths=("ws", "health", "pywasm-assets"),
+    )
     return application
 
 

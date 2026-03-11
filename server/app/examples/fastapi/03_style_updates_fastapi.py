@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from pathlib import Path
 
@@ -15,7 +13,7 @@ from pywasm_ui import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CLIENT_ROOT = PROJECT_ROOT / "client"
+WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _on_toggle_style(session: PyWasmSession):
@@ -68,7 +66,13 @@ def create_app() -> FastAPI:
     async def health() -> dict[str, str]:
         return {"status": "ok", "example": "03_style_updates"}
 
-    pywasm_ui.fastapi.register_frontend_routes(application, CLIENT_ROOT)
+    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
+    pywasm_ui.fastapi.register_frontend_routes(
+        application,
+        WEB_ROOT,
+        pages={"/": "index.html"},
+        reserved_paths=("ws", "health", "pywasm-assets"),
+    )
     return application
 
 

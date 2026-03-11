@@ -18,6 +18,6 @@ Ce dossier contient deux versions completes de la documentation:
 ## Nouveautes recentes
 
 - Protocole WebSocket enrichi avec acquittement serveur -> client (`meta.command_id` + `receipt`).
-- Catalogue de widgets standard etendu (form controls, layout, feedback, content).
+- Catalogue de widgets HTML etendu (form controls, layout, feedback, content).
 - Quick start apres clone documente pour un demarrage sans rebuild WASM.
 - Suite Selenium dediee avec un test d'integration par widget (`tests/integration/test_selenium_widgets_catalog.py`).

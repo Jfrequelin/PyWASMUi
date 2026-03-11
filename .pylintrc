@@ -15,3 +15,7 @@ disable=
     invalid-name,
     redefined-builtin,
     protected-access
+
+[DESIGN]
+max-locals=20
+max-public-methods=30

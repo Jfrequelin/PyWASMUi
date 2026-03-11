@@ -1,5 +1,5 @@
 from .base import Style, WasmWidget, Widget, WidgetStyle
-from .standard import (
+from .html import (
     AlertWidget,
     BadgeWidget,
     ButtonWidget,

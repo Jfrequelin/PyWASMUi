@@ -16,7 +16,7 @@ This section contains the full English documentation for the `PyWASMui` project.
 - server -> client acknowledgement flow with `meta.command_id` + `receipt`
 - post-clone quick start path (no mandatory WASM rebuild)
 - per-widget Selenium integration catalog: `tests/integration/test_selenium_widgets_catalog.py`
-- full standard widget catalog
+- full HTML widget catalog
 
 ## Recommended Reading Order
 

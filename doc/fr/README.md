@@ -16,7 +16,7 @@ Cette section contient la documentation complete en francais du projet `PyWASMui
 - acquittement serveur -> client via `meta.command_id` + message `receipt`
 - quick start apres clone (sans rebuild WASM obligatoire)
 - catalogue Selenium par widget: `tests/integration/test_selenium_widgets_catalog.py`
-- liste complete des widgets standards
+- liste complete des widgets HTML
 
 ## Ordre de lecture conseille
 

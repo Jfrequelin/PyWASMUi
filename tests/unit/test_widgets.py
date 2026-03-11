@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import importlib
+import pywasm_ui.widgets.html as html_widgets
+
 from pywasm_ui.widgets import (
     AlertWidget,
     BadgeWidget,
     ButtonWidget,
     CardWidget,
     CheckboxWidget,
+    ContainerWidget,
     DatePickerWidget,
     ConnectionStatusWidget,
     DividerWidget,
     HeadingWidget,
     IconButtonWidget,
     LabelWidget,
+        ListViewWidget,
     ParagraphWidget,
     ModalWidget,
     OptionWidget,
@@ -22,6 +27,9 @@ from pywasm_ui.widgets import (
     StackWidget,
     Style,
     TextAreaWidget,
+        TextInputWidget,
+    WasmWidget,
+        WindowWidget,
     WidgetTree,
 )
 
@@ -216,3 +224,66 @@ def test_new_form_widgets_payloads_and_handlers() -> None:
     modal_payload = modal.to_payload()["props"]
     assert modal_payload["__tag"] == "dialog"
     assert modal_payload["attrs"]["open"] == "true"
+
+
+def test_html_widget_exports_match_available_widget_classes() -> None:
+    exported = set(html_widgets.__all__)
+    discovered = {
+        name
+        for name, value in html_widgets.__dict__.items()
+        if name.endswith("Widget")
+        and isinstance(value, type)
+        and issubclass(value, WasmWidget)
+        and value.__module__.startswith("pywasm_ui.widgets.html.")
+    }
+
+    assert exported == discovered
+
+
+def test_html_widget_kinds_follow_class_name_convention() -> None:
+    widgets = [
+        AlertWidget(id="alert_kind"),
+        BadgeWidget(id="badge_kind"),
+        ButtonWidget(id="button_kind"),
+        CardWidget(id="card_kind"),
+        CheckboxWidget(id="checkbox_kind"),
+        ContainerWidget(id="container_kind"),
+        DatePickerWidget(id="date_kind"),
+        DividerWidget(id="divider_kind"),
+        HeadingWidget(id="heading_kind"),
+        IconButtonWidget(id="icon_button_kind"),
+        LabelWidget(id="label_kind"),
+        ListViewWidget(id="list_view_kind"),
+        ModalWidget(id="modal_kind"),
+        OptionWidget(id="option_kind", parent="select_kind", text="Option", value="option"),
+        ParagraphWidget(id="paragraph_kind"),
+        ProgressWidget(id="progress_kind"),
+        RowWidget(id="row_kind"),
+        SelectWidget(id="select_kind"),
+        SliderWidget(id="slider_kind"),
+        StackWidget(id="stack_kind"),
+        TextAreaWidget(id="text_area_kind"),
+        TextInputWidget(id="text_input_kind"),
+        WindowWidget(id="window_kind"),
+    ]
+
+    for widget in widgets:
+        payload = widget.to_payload()
+        expected_kind = widget.__class__.__name__.removesuffix("Widget")
+        assert payload["kind"] == expected_kind
+
+
+def test_legacy_standard_package_import_remains_available() -> None:
+    module = importlib.import_module("pywasm_ui.widgets.standard")
+    button_cls = getattr(module, "ButtonWidget")
+
+    widget = button_cls(id="legacy_pkg_btn", text="legacy")
+    assert widget.to_payload()["kind"] == "Button"
+
+
+def test_legacy_standard_submodule_import_remains_available() -> None:
+    module = importlib.import_module("pywasm_ui.widgets.standard.ButtonWidget")
+    button_cls = getattr(module, "ButtonWidget")
+
+    widget = button_cls(id="legacy_submodule_btn", text="legacy")
+    assert widget.to_payload()["kind"] == "Button"

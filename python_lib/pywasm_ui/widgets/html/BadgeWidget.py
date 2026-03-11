@@ -3,34 +3,29 @@ from __future__ import annotations
 from typing import Any
 
 from ..base import Style, WasmWidget
-from ._common import init_standard_widget
+from ._common import html_widget_kind, init_standard_widget
 
 
-class OptionWidget(WasmWidget):  # pylint: disable=super-init-not-called
-    def __init__(  # pylint: disable=super-init-not-called
+class BadgeWidget(WasmWidget):
+    def __init__(
         self,
         id: str,
-        parent: str,
-        text: str,
-        value: str,
-        selected: bool = False,
+        parent: str = "root",
+        text: str = "Badge",
+        variant: str = "default",
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        attrs = {"value": value}
-        if selected:
-            attrs["selected"] = "true"
-
+        super().__init__(id=id, kind=html_widget_kind(self), parent=parent, props={}, children=[])
         init_standard_widget(
             self,
             id=id,
-            kind=self.__class__.__name__.removesuffix("Widget"),
             parent=parent,
-            tag="option",
+            tag="span",
             text_prop="text",
             defaults={
                 "text": text,
-                "attrs": attrs,
+                "classes": ["badge", f"badge-{variant}"],
             },
             props=props,
             style=style,

@@ -12,6 +12,16 @@ from .adapters import (
     register_flask_socket,
 )
 from .frontend_assets import get_packaged_frontend_root
+from .events import (
+    ChangeEvent,
+    ClickEvent,
+    SliderChangeEvent,
+    TextInputChangeEvent,
+    UiEvent,
+    to_typed_event,
+)
+from .theme import ThemeTokens, apply_theme
+from .routing import PageDefinition, page, register_fastapi_pages, register_flask_pages
 from .js_runtime_config import JsRuntimeConfig, render_embed_snippet, write_js_runtime_config
 from .communication import (
     FastAPIWasmAsyncReceiver,
@@ -20,6 +30,7 @@ from .communication import (
     WasmAsyncEventReceiver,
     WasmCommandSender,
 )
+from .components import Component, render_component_widgets
 from .patches import (
     merge_patches,
     patch_attrs,
@@ -89,9 +100,23 @@ __all__ = [
     "WasmAsyncEventReceiver",
     "WasmCommandSender",
     "WasmWidget",
+    "Component",
+    "render_component_widgets",
     "JsRuntimeConfig",
     "Style",
     "WidgetStyle",
+    "UiEvent",
+    "ClickEvent",
+    "ChangeEvent",
+    "TextInputChangeEvent",
+    "SliderChangeEvent",
+    "to_typed_event",
+    "ThemeTokens",
+    "apply_theme",
+    "PageDefinition",
+    "page",
+    "register_fastapi_pages",
+    "register_flask_pages",
     "WindowWidget",
     "ContainerWidget",
     "CardWidget",

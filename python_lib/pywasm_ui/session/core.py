@@ -8,12 +8,15 @@ from pydantic import ValidationError
 
 from pywasm_ui.protocol import (
     EventMessage,
+    EventPayload,
     OutgoingMessage,
     ReceiptMessage,
     SessionRef,
     WidgetPayload,
 )
 from pywasm_ui.security import SecurityManager
+from pywasm_ui.components import render_component_widgets
+from pywasm_ui.events import to_typed_event
 from pywasm_ui.widgets import ButtonWidget, LabelWidget, Style, WasmWidget, WidgetTree
 from pywasm_ui.widgets.base import style_dict
 
@@ -22,7 +25,7 @@ from .errors import ProtocolViolationError
 from .types import CallbackResponse, CompatibleEventHandler, EventHandler, adapt_event_handler
 
 
-class PyWasmSession:  # pylint: disable=too-many-public-methods
+class PyWasmSession:
     def __init__(
         self,
         security_manager: SecurityManager,
@@ -66,6 +69,17 @@ class PyWasmSession:  # pylint: disable=too-many-public-methods
     ) -> None:
         self._event_handlers[(event_kind, widget_id)] = adapt_event_handler(handler)
 
+    def register_typed_event_handler(
+        self,
+        event_kind: str,
+        widget_id: str,
+        handler: CompatibleEventHandler,
+    ) -> None:
+        def _wrapped(session: "PyWasmSession", event: EventPayload):
+            return handler(session, to_typed_event(event))
+
+        self._event_handlers[(event_kind, widget_id)] = adapt_event_handler(_wrapped)
+
     def _resolve_widget_id(self, widget_or_id: WasmWidget | str) -> str:
         if isinstance(widget_or_id, WasmWidget):
             return widget_or_id.id
@@ -77,7 +91,11 @@ class PyWasmSession:  # pylint: disable=too-many-public-methods
         event_kind: str,
         handler: CompatibleEventHandler,
     ) -> None:
-        self.register_event_handler(event_kind, self._resolve_widget_id(widget_or_id), handler)
+        self.register_event_handler(
+            event_kind,
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
 
     def on_click(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
         self.connect(widget_or_id, "click", handler)
@@ -85,11 +103,32 @@ class PyWasmSession:  # pylint: disable=too-many-public-methods
     def on_change(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
         self.connect(widget_or_id, "change", handler)
 
+    def on_click_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "click",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
+    def on_change_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "change",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
     def widget(self, widget_id: str) -> WasmWidget | None:
         return self._state.tree.get(widget_id)
 
     def create(self, widget: WasmWidget) -> OutgoingMessage:
         return self.message_create(widget)
+
+    def create_many(self, widgets: Sequence[WasmWidget]) -> list[OutgoingMessage]:
+        return [self.message_create(widget) for widget in widgets]
+
+    def create_component(self, component: Any) -> list[OutgoingMessage]:
+        widgets = render_component_widgets(component, self)
+        return self.create_many(widgets)
 
     def delete(self, widget_or_id: WasmWidget | str) -> OutgoingMessage:
         return self.message_delete(self._resolve_widget_id(widget_or_id))
