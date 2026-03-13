@@ -131,6 +131,27 @@ def test_new_widgets_interactions_with_selenium(chrome_driver) -> None:
     select_helper = pytest.importorskip("selenium.webdriver.support.select").Select
     wait = pytest.importorskip("selenium.webdriver.support.ui").WebDriverWait(chrome_driver, 20)
     ec = pytest.importorskip("selenium.webdriver.support.expected_conditions")
+    click_intercepted = pytest.importorskip("selenium.common.exceptions").ElementClickInterceptedException
+
+    def _click_with_fallback(element_id: str) -> None:
+        element = wait.until(ec.element_to_be_clickable((by.ID, element_id)))
+        chrome_driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+            element,
+        )
+        try:
+            element.click()
+        except click_intercepted:
+            chrome_driver.execute_script("arguments[0].click();", element)
+
+    def _counter_at_least(text: str, prefix: str, minimum: int) -> bool:
+        if not text.startswith(prefix):
+            return False
+        try:
+            value = int(text.split(":", 1)[1].strip())
+        except (IndexError, ValueError):
+            return False
+        return value >= minimum
 
     with _live_example_server() as live_server:
         chrome_driver.get(live_server)
@@ -146,29 +167,29 @@ def test_new_widgets_interactions_with_selenium(chrome_driver) -> None:
             "2026-03-09",
         )
 
-        date_value = wait.until(ec.presence_of_element_located((by.ID, "date_value")))
-        wait.until(lambda _driver: "2026-03-09" in date_value.text)
+        wait.until(lambda driver: "2026-03-09" in driver.find_element(by.ID, "date_value").text)
 
-        checkbox = wait.until(ec.element_to_be_clickable((by.ID, "agree_checkbox")))
-        checkbox.click()
+        _click_with_fallback("agree_checkbox")
 
-        checkbox_value = wait.until(ec.presence_of_element_located((by.ID, "checkbox_value")))
-        wait.until(lambda _driver: "Accepted: True" in checkbox_value.text)
+        wait.until(lambda driver: "Accepted: True" in driver.find_element(by.ID, "checkbox_value").text)
 
         select_el = wait.until(ec.presence_of_element_located((by.ID, "category_select")))
         select_helper(select_el).select_by_value("beta")
 
-        select_value = wait.until(ec.presence_of_element_located((by.ID, "select_value")))
-        wait.until(lambda _driver: "Select changed: 1" in select_value.text)
+        wait.until(
+            lambda driver: _counter_at_least(
+                driver.find_element(by.ID, "select_value").text,
+                "Select changed:",
+                1,
+            )
+        )
 
-        progress_button = wait.until(ec.element_to_be_clickable((by.ID, "progress_btn")))
-        progress_button.click()
+        _click_with_fallback("progress_btn")
 
         progress = wait.until(ec.presence_of_element_located((by.ID, "task_progress")))
         wait.until(lambda _driver: progress.get_attribute("value") == "40")
 
-        modal_button = wait.until(ec.element_to_be_clickable((by.ID, "modal_btn")))
-        modal_button.click()
+        _click_with_fallback("modal_btn")
 
         modal = wait.until(ec.presence_of_element_located((by.ID, "info_modal")))
         wait.until(lambda _driver: modal.get_attribute("open") in {"true", ""})

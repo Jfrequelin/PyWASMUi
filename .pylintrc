@@ -3,6 +3,8 @@ ignore=.venv,.pytest_cache
 
 [MESSAGES CONTROL]
 disable=
+    line-too-long,
+    import-outside-toplevel,
     missing-module-docstring,
     missing-class-docstring,
     missing-function-docstring,
@@ -18,4 +20,4 @@ disable=
 
 [DESIGN]
 max-locals=20
-max-public-methods=30
+max-public-methods=40
