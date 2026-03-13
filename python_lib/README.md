@@ -29,6 +29,45 @@ Bibliotheque Python pour piloter un client UI WASM en mode server-driven.
 pip install -e ./python_lib
 ```
 
+## Installation avec Poetry
+
+```bash
+cd python_lib
+poetry install
+```
+
+Installation depuis PyPI (quand publie):
+
+```bash
+pip install pywasm-ui
+```
+
+## Publication PyPI avec Poetry
+
+Build local:
+
+```bash
+cd python_lib
+poetry build
+```
+
+Publier sur TestPyPI:
+
+```bash
+cd python_lib
+poetry config repositories.testpypi https://test.pypi.org/legacy/
+poetry config pypi-token.testpypi <TOKEN_TESTPYPI>
+poetry publish --repository testpypi
+```
+
+Publier sur PyPI:
+
+```bash
+cd python_lib
+poetry config pypi-token.pypi <TOKEN_PYPI>
+poetry publish
+```
+
 ## Utilisation FastAPI
 
 ```python

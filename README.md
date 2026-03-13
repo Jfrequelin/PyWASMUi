@@ -41,6 +41,10 @@ python -m pip install -r server/requirements.txt
 # installer la bibliotheque locale reutilisable
 python -m pip install -e python_lib
 
+# alternative Poetry pour developper/publier la lib
+cd python_lib && poetry install
+cd ..
+
 # une seule fois (outillage Rust/WASM)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "$HOME/.cargo/env"
@@ -63,6 +67,10 @@ cd PyWASMui
 # runtime + lib locale
 python -m pip install -r server/requirements.txt
 python -m pip install -e python_lib
+
+# option Poetry
+cd python_lib && poetry install
+cd ..
 
 # dependances de test
 python -m pip install -r requirements-test.txt
@@ -154,6 +162,23 @@ Communication interne WASM cote serveur :
 - envoi : `WasmCommandSender`
 - reception asynchrone : `WasmAsyncEventReceiver`
 - orchestration : `WasmAppCommunication`
+
+## Publication PyPI (Poetry)
+
+```bash
+# build local du package
+make poetry-build
+
+# publier vers TestPyPI
+cd python_lib
+poetry config repositories.testpypi https://test.pypi.org/legacy/
+poetry config pypi-token.testpypi <TOKEN_TESTPYPI>
+poetry publish --repository testpypi
+
+# publier vers PyPI
+poetry config pypi-token.pypi <TOKEN_PYPI>
+poetry publish
+```
 
 ## Integration naturelle avec Jinja2
 

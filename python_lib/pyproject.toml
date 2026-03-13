@@ -1,45 +1,40 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "pywasm-ui"
 version = "0.1.0"
 description = "Server-driven UI protocol core for FastAPI/Flask backends"
+authors = ["PyWASMui contributors"]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-  "pydantic>=2.10"
+license = "MIT"
+homepage = "https://github.com/Jfrequelin/PyWASMUi"
+repository = "https://github.com/Jfrequelin/PyWASMUi"
+keywords = ["wasm", "ui", "fastapi", "flask", "websocket"]
+packages = [
+  { include = "pywasm_ui" }
+]
+include = [
+  { path = "pywasm_ui/py.typed", format = ["sdist", "wheel"] },
+  { path = "pywasm_ui/frontend/**/*", format = ["sdist", "wheel"] }
 ]
 
-[project.optional-dependencies]
-test = [
-  "pytest>=8.0",
-  "pylint>=3.0"
-]
-fastapi = [
-  "fastapi>=0.115",
-  "uvicorn[standard]>=0.32"
-]
-flask = [
-  "flask>=3.0",
-  "flask-sock>=0.7"
-]
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+pydantic = ">=2.10"
+fastapi = { version = ">=0.115", optional = true }
+uvicorn = { version = ">=0.32", extras = ["standard"], optional = true }
+flask = { version = ">=3.0", optional = true }
+flask-sock = { version = ">=0.7", optional = true }
 
-[tool.setuptools]
-package-dir = {"" = "."}
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0"
+pylint = ">=3.0"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["pywasm_ui*"]
+[tool.poetry.extras]
+fastapi = ["fastapi", "uvicorn"]
+flask = ["flask", "flask-sock"]
 
-[tool.setuptools.package-data]
-pywasm_ui = [
-  "py.typed",
-  "frontend/**/*.html",
-  "frontend/**/*.js",
-  "frontend/**/*.css",
-  "frontend/**/*.json",
-  "frontend/**/*.wasm",
-  "frontend/**/*.d.ts",
-]
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/Jfrequelin/PyWASMUi/issues"

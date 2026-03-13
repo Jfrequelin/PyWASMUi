@@ -215,6 +215,18 @@ def test_example_ui_with_selenium(case: dict[str, str], chrome_driver) -> None:
         20,
     )
     ec = pytest.importorskip("selenium.webdriver.support.expected_conditions")
+    click_intercepted = pytest.importorskip("selenium.common.exceptions").ElementClickInterceptedException
+
+    def _click_with_fallback(element) -> None:
+        # Scroll first to avoid fixed-position overlays intercepting clicks in headless CI.
+        chrome_driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+            element,
+        )
+        try:
+            element.click()
+        except click_intercepted:
+            chrome_driver.execute_script("arguments[0].click();", element)
 
     with _live_example_server(case) as live_server:
         chrome_driver.get(live_server)
@@ -225,7 +237,10 @@ def test_example_ui_with_selenium(case: dict[str, str], chrome_driver) -> None:
         click_id = case.get("click_id")
         if click_id:
             button = wait.until(ec.element_to_be_clickable((by.ID, click_id)))
-            button.click()
+            _click_with_fallback(button)
 
-            after = wait.until(ec.presence_of_element_located((by.ID, case["after_id"])))
-            wait.until(lambda _driver: case["after_text"] in after.text)
+            # Re-query each poll to avoid stale references and race conditions.
+            wait.until(
+                lambda driver: case["after_text"]
+                in driver.find_element(by.ID, case["after_id"]).text
+            )

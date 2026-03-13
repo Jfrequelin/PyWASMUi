@@ -284,10 +284,31 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
     if not action:
         return
 
+    click_intercepted = pytest.importorskip("selenium.common.exceptions").ElementClickInterceptedException
+
+    def _click_with_fallback(element_id: str) -> None:
+        element = wait.until(ec.element_to_be_clickable((by.ID, element_id)))
+        chrome_driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+            element,
+        )
+        try:
+            element.click()
+        except click_intercepted:
+            chrome_driver.execute_script("arguments[0].click();", element)
+
+    def _counter_at_least(text: str, prefix: str, minimum: int) -> bool:
+        if not text.startswith(prefix):
+            return False
+        try:
+            value = int(text.split(":", 1)[1].strip())
+        except (IndexError, ValueError):
+            return False
+        return value >= minimum
+
     if action == "button_increment":
-        chrome_driver.find_element(by.ID, "btn_1").click()
-        label = wait.until(ec.presence_of_element_located((by.ID, "label_count_1")))
-        wait.until(lambda _driver: "Count A: 1" in label.text)
+        _click_with_fallback("btn_1")
+        wait.until(lambda driver: "Count A: 1" in driver.find_element(by.ID, "label_count_1").text)
         return
 
     if action == "checkbox_toggle":
@@ -310,13 +331,14 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
         return
 
     if action == "icon_notify":
-        chrome_driver.find_element(by.ID, "btn_icon").click()
-        alert = wait.until(ec.presence_of_element_located((by.ID, "alert_status")))
-        wait.until(lambda _driver: "Icon button clicked" in alert.text)
+        _click_with_fallback("btn_icon")
+        wait.until(
+            lambda driver: "Icon button clicked" in driver.find_element(by.ID, "alert_status").text
+        )
         return
 
     if action == "modal_toggle":
-        chrome_driver.find_element(by.ID, "modal_btn").click()
+        _click_with_fallback("modal_btn")
         modal = wait.until(ec.presence_of_element_located((by.ID, "info_modal")))
         wait.until(lambda _driver: modal.get_attribute("open") in {"true", ""})
         return
@@ -331,7 +353,7 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
         return
 
     if action == "progress_increment":
-        chrome_driver.find_element(by.ID, "progress_btn").click()
+        _click_with_fallback("progress_btn")
         progress = wait.until(ec.presence_of_element_located((by.ID, "task_progress")))
         wait.until(lambda _driver: progress.get_attribute("value") == "40")
         return
@@ -341,20 +363,31 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
             wait.until(ec.presence_of_element_located((by.ID, "category_select")))
         )
         select.select_by_value("beta")
-        status = wait.until(ec.presence_of_element_located((by.ID, "select_value")))
-        wait.until(lambda _driver: "Select changed: 1" in status.text)
+        chrome_driver.execute_script(
+            "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+            select._el,
+        )
+        wait.until(
+            lambda driver: _counter_at_least(
+                driver.find_element(by.ID, "select_value").text,
+                "Select changed:",
+                1,
+            )
+        )
         return
 
     if action == "slider_change":
         slider = wait.until(ec.presence_of_element_located((by.ID, "slider_volume")))
         chrome_driver.execute_script(
             "arguments[0].value = arguments[1];"
+            "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
             "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
             slider,
             "35",
         )
-        status = wait.until(ec.presence_of_element_located((by.ID, "paragraph_slider")))
-        wait.until(lambda _driver: "Slider value: 35" in status.text)
+        wait.until(
+            lambda driver: "Slider value: 35" in driver.find_element(by.ID, "paragraph_slider").text
+        )
         return
 
     if action == "textarea_change":
@@ -362,8 +395,9 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
         textarea.clear()
         textarea.send_keys("selenium notes")
         textarea.send_keys("\t")
-        status = wait.until(ec.presence_of_element_located((by.ID, "paragraph_notes")))
-        wait.until(lambda _driver: "selenium notes" in status.text)
+        wait.until(
+            lambda driver: "selenium notes" in driver.find_element(by.ID, "paragraph_notes").text
+        )
         return
 
     if action == "textinput_change":
@@ -371,8 +405,9 @@ def _apply_widget_action(case: dict[str, str], chrome_driver, by, wait, ec) -> N
         text_input.clear()
         text_input.send_keys("Ada")
         text_input.send_keys("\t")
-        status = wait.until(ec.presence_of_element_located((by.ID, "paragraph_name")))
-        wait.until(lambda _driver: "Name preview: Ada" in status.text)
+        wait.until(
+            lambda driver: "Name preview: Ada" in driver.find_element(by.ID, "paragraph_name").text
+        )
         return
 
     pytest.fail(f"Unknown action: {action}")

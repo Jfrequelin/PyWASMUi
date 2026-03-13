@@ -16,6 +16,14 @@ python -m pip install -r server/requirements.txt
 python -m pip install -e python_lib
 ```
 
+Alternative avec Poetry (pour packager/publier la lib):
+
+```bash
+cd python_lib
+poetry install
+cd ..
+```
+
 ## Quick Start Apres Clone
 
 ```bash
@@ -133,4 +141,19 @@ Necessaire uniquement si vous modifiez `client/wasm_ui/src`.
 ```bash
 cd client/wasm_ui
 wasm-pack build --target web --out-dir pkg
+```
+
+## Publication PyPI avec Poetry
+
+```bash
+# depuis la racine
+make poetry-build
+
+cd python_lib
+poetry config repositories.testpypi https://test.pypi.org/legacy/
+poetry config pypi-token.testpypi <TOKEN_TESTPYPI>
+poetry publish --repository testpypi
+
+poetry config pypi-token.pypi <TOKEN_PYPI>
+poetry publish
 ```

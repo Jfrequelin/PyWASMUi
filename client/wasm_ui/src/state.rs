@@ -6,18 +6,23 @@ thread_local! {
     static STATE: RefCell<ClientState> = RefCell::new(ClientState::default());
 }
 
-pub(crate) fn set_session(token: String, _secret: String) {
+pub(crate) fn set_session(token: String, secret: String) {
     STATE.with(|state| {
         let mut s = state.borrow_mut();
         s.session_token = Some(token);
+        s.client_secret = Some(secret);
+        s.nonce = 0;
     });
 }
 
-pub(crate) fn next_event_context() -> Option<(String, u64)> {
+pub(crate) fn next_event_context() -> Option<(String, String, u64)> {
     STATE.with(|state| {
         let mut s = state.borrow_mut();
         s.nonce = s.nonce.saturating_add(1);
-        s.session_token.clone().map(|token| (token, s.nonce))
+        match (s.session_token.clone(), s.client_secret.clone()) {
+            (Some(token), Some(secret)) => Some((token, secret, s.nonce)),
+            _ => None,
+        }
     })
 }
 
