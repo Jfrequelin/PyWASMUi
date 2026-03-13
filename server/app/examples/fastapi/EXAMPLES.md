@@ -33,17 +33,7 @@ File: `server/app/examples/fastapi/03_style_updates_fastapi.py`
 python -m uvicorn server.app.examples.fastapi.03_style_updates_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
-## 04. Shared Style Template
-
-File: `server/app/examples/fastapi/04_style_template_fastapi.py`
-
-Template: `server/app/examples/fastapi/shared_style_template.json`
-
-```bash
-python -m uvicorn server.app.examples.fastapi.04_style_template_fastapi:app --host 127.0.0.1 --port 8000
-```
-
-## 05. Form Controls
+## 04. Form Controls
 
 File: `server/app/examples/fastapi/05_form_controls_fastapi.py`
 
@@ -51,10 +41,18 @@ File: `server/app/examples/fastapi/05_form_controls_fastapi.py`
 python -m uvicorn server.app.examples.fastapi.05_form_controls_fastapi:app --host 127.0.0.1 --port 8000
 ```
 
-## 06. All Widgets Showcase
+## 05. All Widgets Showcase
 
 File: `server/app/examples/fastapi/all_widgets_fastapi.py`
 
 ```bash
 python -m uvicorn server.app.examples.fastapi.all_widgets_fastapi:app --host 127.0.0.1 --port 8000
+```
+
+## 10. Widgets Catalog
+
+File: `server/app/examples/fastapi/10_widgets_catalog_fastapi.py`
+
+```bash
+python -m uvicorn server.app.examples.fastapi.10_widgets_catalog_fastapi:app --host 127.0.0.1 --port 8000
 ```

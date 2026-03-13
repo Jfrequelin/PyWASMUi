@@ -76,7 +76,11 @@ def test_websocket_flow_init_create_and_click_update() -> None:
                     "protocol": 1,
                     "type": "event",
                     "session": {"token": init["session"]["token"]},
-                    "event": {"kind": "click", "id": "btn2", "value": None},
+                    "event": {"kind": "click", "id": "btn2", "value": None, "nonce": 2},
+                    "mac": _sign(
+                        init["client_secret"],
+                        {"kind": "click", "id": "btn2", "value": None, "nonce": 2},
+                    ),
                 }
             )
         )
@@ -130,7 +134,11 @@ def test_websocket_refresh_keeps_session_state_with_session_token() -> None:
                     "protocol": 1,
                     "type": "event",
                     "session": {"token": init["session"]["token"]},
-                    "event": {"kind": "click", "id": "btn1", "value": None},
+                    "event": {"kind": "click", "id": "btn1", "value": None, "nonce": 1},
+                    "mac": _sign(
+                        init["client_secret"],
+                        {"kind": "click", "id": "btn1", "value": None, "nonce": 1},
+                    ),
                 }
             )
         )
@@ -157,7 +165,11 @@ def test_websocket_refresh_keeps_session_state_with_session_token() -> None:
                     "protocol": 1,
                     "type": "event",
                     "session": {"token": token},
-                    "event": {"kind": "click", "id": "btn1", "value": None},
+                    "event": {"kind": "click", "id": "btn1", "value": None, "nonce": 2},
+                    "mac": _sign(
+                        reconnect_init["client_secret"],
+                        {"kind": "click", "id": "btn1", "value": None, "nonce": 2},
+                    ),
                 }
             )
         )

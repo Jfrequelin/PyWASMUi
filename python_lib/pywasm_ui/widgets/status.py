@@ -21,22 +21,52 @@ class ConnectionStatusWidget(WasmWidget):
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
+        marker_attrs = {
+            "data-connection-status": "true",
+            "data-connection-state": state,
+        }
+        default_style = {
+            "display": "inline-block",
+            "padding": "6px 10px",
+            "border-radius": "999px",
+            "font-size": "12px",
+            "font-weight": "700",
+            "line-height": "1",
+            "border": "1px solid #cbd5e1",
+            "background-color": "#f8fafc",
+            "color": "#334155",
+        }
         merged_props = {
             "__tag": "p",
             "__text_prop": "text",
-            "state": state,
             "text": _STATUS_TEXT.get(state, "Server: unknown"),
-            **(props or {}),
+            "attrs": marker_attrs,
+            "style": default_style,
         }
+        if props:
+            merged_props.update(props)
+            provided_attrs = props.get("attrs")
+            if isinstance(provided_attrs, dict):
+                merged_props["attrs"] = {
+                    **marker_attrs,
+                    **provided_attrs,
+                }
         super().__init__(
             id=id,
-            kind="ConnectionStatus",
+            kind="Label",
             parent=parent,
             props=merge_style_props(merged_props, style),
             children=[],
         )
 
-    def update_state_patch(self, state: str) -> dict[str, str]:
-        self.props["state"] = state
+    def update_state_patch(self, state: str) -> dict[str, Any]:
         self.props["text"] = _STATUS_TEXT.get(state, "Server: unknown")
-        return {"id": self.id, "state": state, "text": self.props["text"]}
+        attrs = self.props.setdefault("attrs", {})
+        if isinstance(attrs, dict):
+            attrs["data-connection-state"] = state
+        return {
+            "id": self.id,
+            "state": state,
+            "text": self.props["text"],
+            "attrs": {"data-connection-state": state},
+        }

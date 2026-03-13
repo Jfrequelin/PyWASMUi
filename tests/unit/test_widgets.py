@@ -62,10 +62,14 @@ def test_connection_status_widget_patch_updates_state_and_text() -> None:
 
     patch = status.update_state_patch("connected")
 
-    assert status.kind == "ConnectionStatus"
+    assert status.kind == "Label"
     assert patch["id"] == "conn1"
     assert patch["state"] == "connected"
     assert patch["text"] == "Server: connected"
+    patch_attrs = patch.get("attrs")
+    assert isinstance(patch_attrs, dict)
+    assert patch_attrs["data-connection-state"] == "connected"
+    assert status.props["attrs"]["data-connection-status"] == "true"
 
 
 def test_style_object_is_serialized_in_widget_payload() -> None:
@@ -141,6 +145,25 @@ def test_widget_css_and_class_helpers_simplify_styling() -> None:
     assert payload["props"]["style"]["color"] == "#fff"
     assert payload["props"]["style"]["border-radius"] == "8px"
     assert payload["props"]["classes"] == ["primary"]
+
+
+def test_widget_tooltip_helper_adds_and_removes_tooltip_metadata() -> None:
+    button = ButtonWidget(id="btn_tooltip", text="Hover me")
+
+    button.tooltip("Helpful tooltip", delay_ms=1500)
+    payload = button.to_payload()["props"]
+
+    assert "pywasm-tooltip-host" in payload["classes"]
+    assert payload["attrs"]["data-tooltip"] == "Helpful tooltip"
+    assert "title" not in payload["attrs"]
+    assert payload["style"]["--pywasm-tooltip-delay-ms"] == "1500"
+
+    button.tooltip(None)
+    cleared_payload = button.to_payload()["props"]
+    attrs = cleared_payload.get("attrs", {})
+
+    assert "data-tooltip" not in attrs
+    assert "title" not in attrs
 
 
 def test_new_widget_series_payloads_match_framework_like_conventions() -> None:

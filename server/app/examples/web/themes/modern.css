@@ -1,0 +1,13 @@
+:root[data-theme="modern"] {
+  --bg-ink: var(--gray-9, #0f172a);
+  --bg-deep: var(--gray-10, #111827);
+  --bg-soft: var(--gray-8, #1e293b);
+  --surface: color-mix(in srgb, var(--gray-0, #ffffff) 94%, transparent);
+  --surface-border: color-mix(in srgb, var(--gray-9, #0f172a) 16%, transparent);
+  --title: var(--gray-10, #0b1220);
+  --text: var(--gray-7, #334155);
+  --muted: var(--gray-6, #64748b);
+  --accent: var(--teal-7, #0f766e);
+  --accent-hover: var(--teal-8, #0b5f59);
+  --font-ui: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+}

@@ -29,6 +29,7 @@ def _increment_counter(
     label_id: str,
     step: int,
 ) -> dict[str, Any]:
+    # Update session-backed counter and emit a merged patch for text/attrs/style.
     count = int(session.data.get(state_key, 0)) + step
     session.data[state_key] = count
     return merge_patches(
@@ -48,6 +49,7 @@ def _on_increment_2(session: PyWasmSession, _event: EventPayload) -> dict[str, A
 
 
 def _build_initial_widgets() -> list[WasmWidget]:
+    # Two independent counters with distinct button increments.
     label_style = Style(font_size="20px", color="#1f2937")
     button_style_1 = Style(background_color="#0ea5e9", border="none", padding="10px 16px")
     button_style_2 = Style(background_color="#14b8a6", border="none", padding="10px 16px")
@@ -77,6 +79,7 @@ def _build_initial_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
+    # Basic app used as the default FastAPI playground endpoint.
     application = FastAPI(title="PyWASMui server")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,

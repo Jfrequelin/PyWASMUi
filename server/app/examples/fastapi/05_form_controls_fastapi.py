@@ -28,6 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[4]
 WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
+# Callback group: each handler translates a user interaction into a UI patch.
 def on_date_change(session: PyWasmSession, event: EventPayload) -> CallbackResponse:
     return session.update("date_value", text=f"Date: {event.value or '-'}")
 
@@ -63,6 +64,7 @@ def on_modal_toggle(session: PyWasmSession) -> CallbackResponse:
 
 
 def _build_widgets() -> list[WasmWidget]:
+    # Build form controls first so they can be reused in the final tree.
     date_input = DatePickerWidget(
         id="date_input",
         parent="form_stack",
@@ -87,14 +89,9 @@ def _build_widgets() -> list[WasmWidget]:
         text="Increase Progress",
         on_click=on_progress_click,
     )
-    modal_button = ButtonWidget(
-        id="modal_btn",
-        parent="form_stack",
-        text="Toggle Modal",
-        on_click=on_modal_toggle,
-    )
 
     return [
+        # Layout container chain for the demo page.
         WindowWidget(
             id="window_main",
             parent="root",
@@ -123,18 +120,38 @@ def _build_widgets() -> list[WasmWidget]:
         LabelWidget(id="select_value", parent="form_stack", text="Select changed: 0"),
         ProgressWidget(id="task_progress", parent="form_stack", value=25, max_value=100),
         progress_button,
-        modal_button,
+        # Anchor keeps the modal visually attached below the toggle button.
+        CardWidget(
+            id="modal_anchor",
+            parent="form_stack",
+            style=Style(position="relative", display="inline-block", padding="0", border="none"),
+        ),
+        ButtonWidget(
+            id="modal_btn",
+            parent="modal_anchor",
+            text="Toggle Modal",
+            on_click=on_modal_toggle,
+        ),
         ModalWidget(
             id="info_modal",
-            parent="form_stack",
+            parent="modal_anchor",
             text="Server-driven modal content",
             is_open=False,
-            style=Style(border="1px solid #94a3b8", padding="12px"),
+            style=Style(
+                border="1px solid #94a3b8",
+                padding="12px",
+                margin="0",
+                position="absolute",
+                top="calc(100% + 8px)",
+                left="0",
+                z_index="20",
+            ),
         ),
     ]
 
 
 def create_app() -> FastAPI:
+    # Standard runtime registration for websocket + assets + frontend page.
     application = FastAPI(title="PyWASMui form-controls example")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,

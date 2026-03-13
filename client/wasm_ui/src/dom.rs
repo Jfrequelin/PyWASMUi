@@ -8,11 +8,13 @@ use web_sys::{
     Event,
     HtmlElement,
     HtmlInputElement,
+    HtmlSelectElement,
     HtmlTextAreaElement,
 };
 
 use crate::events::send_event;
 use crate::models::Widget;
+use crate::state;
 
 pub(crate) fn ensure_root_widget() {
     let doc = match document() {
@@ -34,30 +36,6 @@ pub(crate) fn ensure_root_widget() {
 }
 
 pub(crate) fn update_connection_status_badge(status: &str) {
-    ensure_root_widget();
-    let doc = match document() {
-        Some(d) => d,
-        None => return,
-    };
-
-    let app = match doc.get_element_by_id("app") {
-        Some(el) => el,
-        None => return,
-    };
-
-    let status_el = match doc.get_element_by_id("ws-status") {
-        Some(el) => el,
-        None => {
-            let created = match doc.create_element("p") {
-                Ok(el) => el,
-                Err(_) => return,
-            };
-            created.set_id("ws-status");
-            let _ = app.prepend_with_node_1(&created);
-            created
-        }
-    };
-
     let label = match status {
         "connected" => "Server: connected",
         "connecting" => "Server: connecting...",
@@ -66,8 +44,15 @@ pub(crate) fn update_connection_status_badge(status: &str) {
         _ => "Server: unknown",
     };
 
-    status_el.set_text_content(Some(label));
-    let _ = status_el.set_attribute("class", &format!("ws-status ws-{}", status));
+    let widget_ids = state::connection_status_widget_ids();
+    for widget_id in widget_ids {
+        let patch = serde_json::json!({
+            "id": widget_id,
+            "text": label,
+            "attrs": {"data-connection-state": status},
+        });
+        apply_update_patch(patch);
+    }
 }
 
 pub(crate) fn render_widget(widget: &Widget) {
@@ -180,7 +165,7 @@ fn create_widget_from_props(doc: &Document, widget: &Widget) -> Option<Element> 
     let el = create_widget_element(doc, widget, tag, text_prop)?;
     apply_common_attributes(&el, widget);
     apply_input_specific_attributes(&el, widget, tag);
-    bind_server_declared_event(&el, widget, tag);
+    bind_server_declared_events(&el, widget, tag);
     Some(el)
 }
 
@@ -271,39 +256,73 @@ fn apply_input_specific_attributes(el: &Element, widget: &Widget, tag: &str) {
     }
 }
 
-fn bind_server_declared_event(el: &Element, widget: &Widget, tag: &str) {
-    let Some(event_kind) = widget.props.get("__event").and_then(Value::as_str) else {
-        return;
-    };
+fn bind_server_declared_events(el: &Element, widget: &Widget, tag: &str) {
+    let mut event_names: Vec<String> = Vec::new();
 
-    let widget_id = widget.id.clone();
-    let event_name = event_kind.to_string();
-    let tag_name = tag.to_string();
-    let el_for_cb = el.clone();
-    let is_input_change = (tag == "input" || tag == "textarea") && event_kind == "change";
-
-    let handler = Closure::<dyn FnMut(Event)>::new(move |_event: Event| {
-        let value = if is_input_change {
-            if tag_name == "input" {
-                el_for_cb
-                    .clone()
-                    .dyn_into::<HtmlInputElement>()
-                    .ok()
-                    .map(|i| i.value())
-            } else {
-                el_for_cb
-                    .clone()
-                    .dyn_into::<HtmlTextAreaElement>()
-                    .ok()
-                    .map(|t| t.value())
+    if let Some(events) = widget.props.get("__events").and_then(Value::as_array) {
+        for event_name in events.iter().filter_map(Value::as_str) {
+            if !event_name.is_empty() && !event_names.iter().any(|existing| existing == event_name) {
+                event_names.push(event_name.to_string());
             }
-        } else {
-            None
-        };
-        send_event(&event_name, &widget_id, value);
-    });
-    let _ = el.add_event_listener_with_callback(event_kind, handler.as_ref().unchecked_ref());
-    handler.forget();
+        }
+    }
+
+    if let Some(single) = widget.props.get("__event").and_then(Value::as_str) {
+        if !single.is_empty() && !event_names.iter().any(|existing| existing == single) {
+            event_names.push(single.to_string());
+        }
+    }
+
+    if event_names.is_empty() {
+        return;
+    }
+
+    for event_name in event_names {
+        let widget_id = widget.id.clone();
+        let tag_name = tag.to_string();
+        let event_name_for_cb = event_name.clone();
+        let el_for_cb = el.clone();
+
+        let handler = Closure::<dyn FnMut(Event)>::new(move |_event: Event| {
+            let value = event_value_for(&el_for_cb, &tag_name, &event_name_for_cb);
+            send_event(&event_name_for_cb, &widget_id, value);
+        });
+        let _ = el.add_event_listener_with_callback(&event_name, handler.as_ref().unchecked_ref());
+        handler.forget();
+    }
+}
+
+fn event_value_for(el: &Element, tag: &str, event_kind: &str) -> Option<String> {
+    if event_kind != "change" && event_kind != "input" {
+        return None;
+    }
+
+    if tag == "input" {
+        let input = el.clone().dyn_into::<HtmlInputElement>().ok()?;
+        let input_type = input.type_();
+        if input_type == "checkbox" || input_type == "radio" {
+            return Some(if input.checked() { "true".to_string() } else { "false".to_string() });
+        }
+        return Some(input.value());
+    }
+
+    if tag == "textarea" {
+        return el
+            .clone()
+            .dyn_into::<HtmlTextAreaElement>()
+            .ok()
+            .map(|textarea| textarea.value());
+    }
+
+    if tag == "select" {
+        return el
+            .clone()
+            .dyn_into::<HtmlSelectElement>()
+            .ok()
+            .map(|select| select.value());
+    }
+
+    None
 }
 
 fn create_widget_element(

@@ -21,6 +21,7 @@ def build_base_props(
         base_props["__text_prop"] = text_prop
     if event is not None:
         base_props["__event"] = event
+        base_props["__events"] = [event]
     if defaults:
         base_props.update(defaults)
     if props:

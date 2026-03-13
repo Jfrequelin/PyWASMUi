@@ -1,0 +1,12 @@
+:root[data-theme="slate"] {
+  --bg-ink: var(--gray-10, #0b1020);
+  --bg-deep: var(--gray-9, #111827);
+  --bg-soft: var(--gray-8, #1f2937);
+  --surface: color-mix(in srgb, var(--gray-0, #ffffff) 95%, transparent);
+  --surface-border: color-mix(in srgb, var(--gray-8, #1f2937) 20%, transparent);
+  --title: var(--gray-10, #0f172a);
+  --text: var(--gray-7, #334155);
+  --muted: var(--gray-6, #64748b);
+  --accent: var(--indigo-7, #4338ca);
+  --accent-hover: var(--indigo-8, #3730a3);
+}

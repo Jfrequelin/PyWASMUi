@@ -81,6 +81,85 @@ def _simulated_latency_seconds() -> float:
     return ms / 1000.0
 
 
+def _session_ttl_seconds() -> float:
+    raw = os.getenv("PYWASM_SESSION_TTL_SECONDS", "1800")
+    try:
+        ttl = float(raw)
+    except ValueError:
+        return 1800.0
+    return 1800.0 if ttl <= 0 else ttl
+
+
+def _max_active_sessions() -> int:
+    raw = os.getenv("PYWASM_MAX_ACTIVE_SESSIONS", "1024")
+    try:
+        value = int(raw)
+    except ValueError:
+        return 1024
+    return 1024 if value <= 0 else value
+
+
+def _allowed_ws_origins() -> set[str] | None:
+    raw = os.getenv("PYWASM_ALLOWED_WS_ORIGINS", "").strip()
+    if not raw:
+        return None
+    values = {origin.strip() for origin in raw.split(",") if origin.strip()}
+    return values or None
+
+
+def _is_origin_allowed(origin: str | None, allowed_origins: set[str] | None) -> bool:
+    if allowed_origins is None:
+        return True
+    if "*" in allowed_origins:
+        return True
+    if origin is None:
+        return False
+    return origin in allowed_origins
+
+
+def _prune_active_sessions(
+    active_sessions: dict[str, tuple[PyWasmSession, float]],
+    *,
+    now: float,
+    ttl_seconds: float,
+    max_sessions: int,
+) -> None:
+    expired_tokens = [
+        token
+        for token, (_session, last_seen) in active_sessions.items()
+        if now - last_seen > ttl_seconds
+    ]
+    for token in expired_tokens:
+        active_sessions.pop(token, None)
+
+    if len(active_sessions) <= max_sessions:
+        return
+
+    overflow = len(active_sessions) - max_sessions
+    oldest = sorted(active_sessions.items(), key=lambda item: item[1][1])
+    for token, _entry in oldest[:overflow]:
+        active_sessions.pop(token, None)
+
+
+def _default_security_headers() -> dict[str, str]:
+    return {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'self'; frame-ancestors 'none'",
+    }
+
+
+def _apply_security_headers(response: object) -> object:
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return response
+    for key, value in _default_security_headers().items():
+        if key not in headers:
+            headers[key] = value
+    return response
+
+
 def _normalize_page_route(route: str) -> str:
     value = route.strip()
     if not value:
@@ -158,14 +237,14 @@ def mount_fastapi_frontend(
     async def _frontend_index() -> object:
         index = _resolve_static_file(root, index_file)
         if index is not None:
-            return file_response(index)
-        return json_response(
+            return _apply_security_headers(file_response(index))
+        return _apply_security_headers(json_response(
             status_code=503,
             content={
                 "error": "frontend-not-found",
                 "hint": f"Missing {root.name}/{index_file}",
             },
-        )
+        ))
 
     for route, file_path in route_to_file.items():
         if route == "/":
@@ -174,11 +253,11 @@ def mount_fastapi_frontend(
         async def _page_endpoint(page_file: str = file_path) -> object:
             page = _resolve_static_file(root, page_file)
             if page is None:
-                return json_response(
+                return _apply_security_headers(json_response(
                     status_code=404,
                     content={"error": "page-not-found", "path": page_file},
-                )
-            return file_response(page)
+                ))
+            return _apply_security_headers(file_response(page))
 
         app.get(route)(_page_endpoint)  # type: ignore[attr-defined]
 
@@ -186,25 +265,25 @@ def mount_fastapi_frontend(
     async def _frontend_assets(full_path: str) -> object:
         first_segment = full_path.split("/", 1)[0]
         if first_segment in excluded:
-            return json_response(status_code=404, content={"error": "not-found"})
+            return _apply_security_headers(json_response(status_code=404, content={"error": "not-found"}))
 
         target = _resolve_static_file(root, full_path)
         if target is not None:
-            return file_response(target)
+            return _apply_security_headers(file_response(target))
 
         if spa_fallback:
             index = _resolve_static_file(root, index_file)
             if index is not None:
-                return file_response(index)
-            return json_response(
+                return _apply_security_headers(file_response(index))
+            return _apply_security_headers(json_response(
                 status_code=503,
                 content={
                     "error": "frontend-not-found",
                     "hint": f"Missing {root.name}/{index_file}",
                 },
-            )
+            ))
 
-        return json_response(status_code=404, content={"error": "not-found"})
+        return _apply_security_headers(json_response(status_code=404, content={"error": "not-found"}))
 
 
 def register_flask_frontend(
@@ -237,16 +316,15 @@ def register_flask_frontend(
     def _frontend_index() -> object:
         index = _resolve_static_file(root, index_file)
         if index is not None:
-            return send_from_directory_fn(str(root), index_file)
-        return (
-            jsonify_fn(
-                {
-                    "error": "frontend-not-found",
-                    "hint": f"Missing {root.name}/{index_file}",
-                }
-            ),
-            503,
+            return _apply_security_headers(send_from_directory_fn(str(root), index_file))
+        response = jsonify_fn(
+            {
+                "error": "frontend-not-found",
+                "hint": f"Missing {root.name}/{index_file}",
+            }
         )
+        cast(Any, response).status_code = 503
+        return _apply_security_headers(response)
 
     for route, file_path in route_to_file.items():
         if route == "/":
@@ -258,11 +336,10 @@ def register_flask_frontend(
         def _page_endpoint(page_file: str = file_path) -> object:
             page = _resolve_static_file(root, page_file)
             if page is None:
-                return (
-                    jsonify_fn({"error": "page-not-found", "path": page_file}),
-                    404,
-                )
-            return send_from_directory_fn(str(root), page_file)
+                response = jsonify_fn({"error": "page-not-found", "path": page_file})
+                cast(Any, response).status_code = 404
+                return _apply_security_headers(response)
+            return _apply_security_headers(send_from_directory_fn(str(root), page_file))
 
         app.add_url_rule(  # type: ignore[attr-defined]
             route,
@@ -275,27 +352,30 @@ def register_flask_frontend(
     def _frontend_assets(full_path: str) -> object:
         first_segment = full_path.split("/", 1)[0]
         if first_segment in excluded:
-            return jsonify_fn({"error": "not-found"}), 404
+            response = jsonify_fn({"error": "not-found"})
+            cast(Any, response).status_code = 404
+            return _apply_security_headers(response)
 
         target = _resolve_static_file(root, full_path)
         if target is not None:
-            return send_from_directory_fn(str(root), full_path)
+            return _apply_security_headers(send_from_directory_fn(str(root), full_path))
 
         if spa_fallback:
             index = _resolve_static_file(root, index_file)
             if index is not None:
-                return send_from_directory_fn(str(root), index_file)
-            return (
-                jsonify_fn(
-                    {
-                        "error": "frontend-not-found",
-                        "hint": f"Missing {root.name}/{index_file}",
-                    }
-                ),
-                503,
+                return _apply_security_headers(send_from_directory_fn(str(root), index_file))
+            response = jsonify_fn(
+                {
+                    "error": "frontend-not-found",
+                    "hint": f"Missing {root.name}/{index_file}",
+                }
             )
+            cast(Any, response).status_code = 503
+            return _apply_security_headers(response)
 
-        return jsonify_fn({"error": "not-found"}), 404
+        response = jsonify_fn({"error": "not-found"})
+        cast(Any, response).status_code = 404
+        return _apply_security_headers(response)
 
 
 def mount_fastapi_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
@@ -578,16 +658,32 @@ def mount_fastapi_websocket(
         configure_session=configure_session,
         style_template=style_template,
     )
-    active_sessions: dict[str, PyWasmSession] = {}
+    active_sessions: dict[str, tuple[PyWasmSession, float]] = {}
+    ttl_seconds = _session_ttl_seconds()
+    max_sessions = _max_active_sessions()
+    allowed_origins = _allowed_ws_origins()
 
     @app.websocket(path)  # type: ignore[attr-defined]
     async def _ws_endpoint(websocket: WebSocket) -> None:
+        origin = websocket.headers.get("origin")
+        if not _is_origin_allowed(origin, allowed_origins):
+            await websocket.close(code=1008, reason="origin-not-allowed")
+            return
+
         await websocket.accept()
+        now = time.time()
+        _prune_active_sessions(
+            active_sessions,
+            now=now,
+            ttl_seconds=ttl_seconds,
+            max_sessions=max_sessions,
+        )
         requested_token = websocket.query_params.get("session_token")
-        session = active_sessions.get(requested_token) if requested_token else None
+        session_entry = active_sessions.get(requested_token) if requested_token else None
+        session = session_entry[0] if session_entry is not None else None
         if session is None:
             session = factory()
-            active_sessions[session.session_token] = session
+        active_sessions[session.session_token] = (session, now)
 
         comm = WasmAppCommunication(
             sender=FastAPIWasmCommandSender(websocket),
@@ -608,6 +704,7 @@ def mount_fastapi_websocket(
                 except ProtocolViolationError as exc:
                     await websocket.close(code=exc.close_code, reason=exc.reason)
                     return
+                active_sessions[session.session_token] = (session, time.time())
 
                 if latency_s > 0:
                     await asyncio.sleep(latency_s)
@@ -655,15 +752,35 @@ def register_flask_socket(
         configure_session=configure_session,
         style_template=style_template,
     )
-    active_sessions: dict[str, PyWasmSession] = {}
+    active_sessions: dict[str, tuple[PyWasmSession, float]] = {}
+    ttl_seconds = _session_ttl_seconds()
+    max_sessions = _max_active_sessions()
+    allowed_origins = _allowed_ws_origins()
 
     @sock.route(path)  # type: ignore[attr-defined]
     def _ws_handler(ws: object) -> None:
+        origin = None
+        environ = getattr(ws, "environ", None)
+        if isinstance(environ, dict):
+            header_origin = environ.get("HTTP_ORIGIN")
+            if isinstance(header_origin, str):
+                origin = header_origin
+        if not _is_origin_allowed(origin, allowed_origins):
+            return
+
+        now = time.time()
+        _prune_active_sessions(
+            active_sessions,
+            now=now,
+            ttl_seconds=ttl_seconds,
+            max_sessions=max_sessions,
+        )
         requested_token = _extract_flask_requested_token(ws)
-        session = active_sessions.get(requested_token) if requested_token else None
+        session_entry = active_sessions.get(requested_token) if requested_token else None
+        session = session_entry[0] if session_entry is not None else None
         if session is None:
             session = factory()
-            active_sessions[session.session_token] = session
+        active_sessions[session.session_token] = (session, now)
 
         for msg in session.prepare_outbound_commands(session.bootstrap_messages()):
             if latency_s > 0:
@@ -683,6 +800,7 @@ def register_flask_socket(
             except ProtocolViolationError:
                 # Flask-Sock close semantics can vary by backend; end the loop safely.
                 return
+            active_sessions[session.session_token] = (session, time.time())
             for response in session.prepare_outbound_commands(responses):
                 if latency_s > 0:
                     time.sleep(latency_s)

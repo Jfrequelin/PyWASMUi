@@ -316,7 +316,7 @@ def _build_interactive_widgets() -> InteractiveWidgets:
 
     modal_btn = ButtonWidget(
         id="modal_btn",
-        parent="stack_main",
+        parent="modal_anchor",
         text="Toggle Modal",
         on_click=on_modal_toggle,
     )
@@ -381,13 +381,26 @@ def _build_interaction_section(widgets: InteractiveWidgets) -> list[WasmWidget]:
         LabelWidget(id="select_value", parent="stack_main", text="Select changed: 0"),
         ProgressWidget(id="task_progress", parent="stack_main", value=25, max_value=100),
         widgets.progress_btn,
+        ContainerWidget(
+            id="modal_anchor",
+            parent="stack_main",
+            style=Style(position="relative", display="inline-block"),
+        ),
         widgets.modal_btn,
         ModalWidget(
             id="info_modal",
-            parent="stack_main",
+            parent="modal_anchor",
             text="Server-driven modal content",
             is_open=False,
-            style=Style(border="1px solid #94a3b8", padding="12px"),
+            style=Style(
+                border="1px solid #94a3b8",
+                padding="12px",
+                margin="0",
+                position="absolute",
+                top="calc(100% + 8px)",
+                left="0",
+                z_index="20",
+            ),
         ),
     ]
 
@@ -431,10 +444,9 @@ def _build_dynamic_table_section(widgets: InteractiveWidgets) -> list[WasmWidget
     ]
 
 
-def _build_initial_widgets() -> list[WasmWidget]:
+def _build_initial_widgets(include_status_widget: bool = False) -> list[WasmWidget]:
     widgets = _build_interactive_widgets()
-    return [
-        ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"),
+    initial_widgets = [
         WindowWidget(
             id="window_main",
             parent="root",
@@ -451,6 +463,9 @@ def _build_initial_widgets() -> list[WasmWidget]:
         *_build_features_section(),
         *_build_dynamic_table_section(widgets),
     ]
+    if include_status_widget:
+        initial_widgets.insert(0, ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"))
+    return initial_widgets
 
 
 def create_app() -> FastAPI:
@@ -459,7 +474,9 @@ def create_app() -> FastAPI:
         application,
         path="/ws",
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
-        initial_widgets=_build_initial_widgets(),
+        initial_widgets=_build_initial_widgets(
+            include_status_widget=os.getenv("PYWASM_INCLUDE_STATUS_WIDGET") == "1"
+        ),
     )
     pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
 

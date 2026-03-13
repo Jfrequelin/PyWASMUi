@@ -17,6 +17,7 @@ WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _on_toggle_style(session: PyWasmSession):
+    # Toggle a boolean in session data to alternate between two visual states.
     is_on = bool(session.data.get("is_on", False))
     next_value = not is_on
     session.data["is_on"] = next_value
@@ -44,16 +45,19 @@ def _on_toggle_style(session: PyWasmSession):
 
 
 def _build_widgets() -> list[WasmWidget]:
+    # Initial style is set directly on the widget before first render.
     status = LabelWidget(id="status_label", parent="root", text="Theme: Inactive")
     status.css("color: #334155; background-color: #e2e8f0", padding="6px 10px")
 
     toggle = ButtonWidget(id="toggle_btn", parent="root", text="Toggle style")
+    # This callback returns both text and style patches.
     toggle.add_class("primary")
     toggle.command(_on_toggle_style)
     return [status, toggle]
 
 
 def create_app() -> FastAPI:
+    # Standard FastAPI example wiring.
     application = FastAPI(title="PyWASMui example 03 - style updates")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,

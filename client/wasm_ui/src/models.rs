@@ -22,6 +22,7 @@ pub(crate) struct SessionRef {
 pub(crate) struct ClientState {
     pub(crate) session_token: Option<String>,
     pub(crate) nonce: u64,
+    pub(crate) connection_status: Option<String>,
     pub(crate) widgets: HashMap<String, Widget>,
 }
 

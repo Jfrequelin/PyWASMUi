@@ -1,0 +1,67 @@
+:root[data-theme="neo-ember"] {
+  --bg-ink: #050505;
+  --bg-deep: #0a0a0a;
+  --bg-soft: #161616;
+  --surface: color-mix(in srgb, #0a0a0a 94%, transparent);
+  --surface-border: color-mix(in srgb, #f97316 45%, transparent);
+  --title: #fff7ed;
+  --text: #fed7aa;
+  --muted: #fdba74;
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --font-ui: "Sora", "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+:root[data-theme="neo-ember"] #app {
+  box-shadow:
+    0 32px 72px rgba(0, 0, 0, 0.72),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+:root[data-theme="neo-ember"] #app .card {
+  background: rgba(8, 8, 8, 0.86);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="neo-ember"] #app hr {
+  border-top-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+:root[data-theme="neo-ember"] #app input[type="text"],
+:root[data-theme="neo-ember"] #app input[type="date"],
+:root[data-theme="neo-ember"] #app textarea,
+:root[data-theme="neo-ember"] #app select {
+  background: rgba(5, 5, 5, 0.92);
+  border-color: color-mix(in srgb, var(--accent) 58%, transparent);
+  color: #fff7ed;
+}
+
+:root[data-theme="neo-ember"] #app input[type="text"]:focus,
+:root[data-theme="neo-ember"] #app input[type="date"]:focus,
+:root[data-theme="neo-ember"] #app textarea:focus,
+:root[data-theme="neo-ember"] #app select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+:root[data-theme="neo-ember"] #app .alert,
+:root[data-theme="neo-ember"] #app .badge {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+:root[data-theme="neo-ember"] #app .alert {
+  background: rgba(10, 10, 10, 0.9);
+  color: #fed7aa;
+}
+
+:root[data-theme="neo-ember"] #app .badge {
+  background: rgba(249, 115, 22, 0.16);
+  color: #ffedd5;
+}
+
+:root[data-theme="neo-ember"] #app dialog {
+  background: rgba(8, 8, 8, 0.97);
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  color: #fff7ed;
+}

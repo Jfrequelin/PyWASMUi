@@ -20,15 +20,18 @@ WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
 
 
 def _on_increment(session: PyWasmSession) -> dict[str, str]:
+    # Persist count in session state so every click updates the same counter.
     current = int(session.data.get("count", 0)) + 1
     session.data["count"] = current
     return {"id": "counter_label", "text": f"Count: {current}"}
 
 
 def _build_widgets() -> list[WasmWidget]:
+    # Button emits a command that returns a patch for the counter label.
     increment_button = ButtonWidget(id="increment_btn", parent="controls_row", text="+1")
     increment_button.command(_on_increment)
 
+    # Parent/child composition: window -> card -> stack -> row.
     return [
         WindowWidget(id="window_main", parent="root"),
         CardWidget(id="card_main", parent="window_main"),
@@ -41,6 +44,7 @@ def _build_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
+    # App bootstrapping: websocket, health probe, assets, then frontend route.
     application = FastAPI(title="PyWASMui example 02 - composition")
     pywasm_ui.fastapi.register_websocket_endpoint(
         application,

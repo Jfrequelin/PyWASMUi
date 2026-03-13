@@ -1,4 +1,5 @@
 use crate::models::{ClientState, Widget};
+use serde_json::Value;
 use std::cell::RefCell;
 
 thread_local! {
@@ -26,8 +27,41 @@ pub(crate) fn upsert_widget(widget: Widget) {
     });
 }
 
+pub(crate) fn set_connection_status(status: &str) {
+    STATE.with(|state| {
+        state.borrow_mut().connection_status = Some(status.to_string());
+    });
+}
+
+pub(crate) fn connection_status() -> Option<String> {
+    STATE.with(|state| state.borrow().connection_status.clone())
+}
+
+pub(crate) fn is_connection_status_widget(widget: &Widget) -> bool {
+    widget
+        .props
+        .get("attrs")
+        .and_then(Value::as_object)
+        .and_then(|attrs| attrs.get("data-connection-status"))
+        .and_then(Value::as_str)
+        .map(|value| value == "true")
+        .unwrap_or(false)
+}
+
 pub(crate) fn remove_widget(id: &str) {
     STATE.with(|state| {
         state.borrow_mut().widgets.remove(id);
     });
+}
+
+pub(crate) fn connection_status_widget_ids() -> Vec<String> {
+    STATE.with(|state| {
+        state
+            .borrow()
+            .widgets
+            .values()
+            .filter(|widget| is_connection_status_widget(widget))
+            .map(|widget| widget.id.clone())
+            .collect()
+    })
 }

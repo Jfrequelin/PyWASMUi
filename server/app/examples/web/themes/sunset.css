@@ -1,0 +1,12 @@
+:root[data-theme="sunset"] {
+  --bg-ink: #3f1a12;
+  --bg-deep: #55251b;
+  --bg-soft: #7c2d12;
+  --surface: color-mix(in srgb, #fff7ed 94%, transparent);
+  --surface-border: color-mix(in srgb, #7c2d12 22%, transparent);
+  --title: #7c2d12;
+  --text: #7a3412;
+  --muted: #9a3412;
+  --accent: var(--orange-7, #c2410c);
+  --accent-hover: var(--orange-8, #9a3412);
+}

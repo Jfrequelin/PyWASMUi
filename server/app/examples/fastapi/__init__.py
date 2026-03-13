@@ -17,12 +17,12 @@ example_03_app = importlib.import_module(
 	".03_style_updates_fastapi",
 	package=__name__,
 ).app
-example_04_app = importlib.import_module(
-	".04_style_template_fastapi",
-	package=__name__,
-).app
 example_05_app = importlib.import_module(
 	".05_form_controls_fastapi",
+	package=__name__,
+).app
+example_10_app = importlib.import_module(
+	".10_widgets_catalog_fastapi",
 	package=__name__,
 ).app
 
@@ -32,6 +32,6 @@ __all__ = [
 	"example_01_app",
 	"example_02_app",
 	"example_03_app",
-	"example_04_app",
 	"example_05_app",
+	"example_10_app",
 ]

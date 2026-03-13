@@ -18,8 +18,14 @@ pub(crate) fn handle_server_message(message: &str) {
     match parsed.r#type.as_str() {
         "create" => {
             if let Some(widget) = parsed.widget {
+                let is_connection_status = state::is_connection_status_widget(&widget);
                 state::upsert_widget(widget.clone());
                 dom::render_widget(&widget);
+                if is_connection_status {
+                    if let Some(status) = state::connection_status() {
+                        dom::update_connection_status_badge(&status);
+                    }
+                }
             }
         }
         "update" => {

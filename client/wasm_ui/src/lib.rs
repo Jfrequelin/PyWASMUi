@@ -17,6 +17,7 @@ pub fn wasm_on_websocket_open() {
 
 #[wasm_bindgen]
 pub fn wasm_set_connection_status(status: &str) {
+    state::set_connection_status(status);
     dom::update_connection_status_badge(status);
 }
 

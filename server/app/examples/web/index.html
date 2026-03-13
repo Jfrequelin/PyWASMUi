@@ -4,89 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyWASMui Examples</title>
-    <style>
-      :root {
-        --bg-a: #ecfdf5;
-        --bg-b: #eef2ff;
-        --surface: #ffffff;
-        --surface-border: #d1d5db;
-        --title: #0f172a;
-        --text: #334155;
-        --primary: #0f766e;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-        margin: 0;
-        min-height: 100vh;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 15% 20%, rgba(16, 185, 129, 0.2), transparent 50%),
-          radial-gradient(circle at 80% 0%, rgba(99, 102, 241, 0.18), transparent 45%),
-          linear-gradient(145deg, var(--bg-a), var(--bg-b));
-        display: grid;
-        place-items: center;
-        padding: 24px;
-      }
-
-      #app {
-        width: min(860px, 100%);
-        min-height: 280px;
-        margin: 0;
-        background: var(--surface);
-        border: 1px solid var(--surface-border);
-        border-radius: 16px;
-        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.12);
-        padding: 20px;
-      }
-
-      .app-shell {
-        width: min(900px, 100%);
-      }
-
-      .app-title {
-        margin: 0 0 12px;
-        color: var(--title);
-        font-size: clamp(1.1rem, 1.6vw, 1.4rem);
-        font-weight: 700;
-        letter-spacing: 0.01em;
-      }
-
-      .primary {
-        background: var(--primary);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 14px;
-        cursor: pointer;
-      }
-      .primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .widget-pending {
-        filter: grayscale(1);
-        opacity: 0.6;
-        pointer-events: none;
-        transition: filter 120ms ease, opacity 120ms ease;
-      }
-    </style>
+    <link rel="stylesheet" href="/theme-modern.css?v=20260313b" />
   </head>
   <body>
     <main class="app-shell">
       <h1 class="app-title">PyWASMui Example Playground</h1>
+      <p class="app-subtitle">A modern default surface for realtime Python-driven UI.</p>
       <div id="app"></div>
     </main>
     <script>
+      const THEME_STORAGE_KEY = "pywasm.theme";
+      const DEFAULT_THEME = "modern";
+
+      function applyTheme(themeName) {
+        const nextTheme = typeof themeName === "string" && themeName ? themeName : DEFAULT_THEME;
+        document.documentElement.setAttribute("data-theme", nextTheme);
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        } catch {
+          // Ignore storage failures.
+        }
+      }
+
+      function currentTheme() {
+        try {
+          return localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
+        } catch {
+          return DEFAULT_THEME;
+        }
+      }
+
+      function syncThemeSelect() {
+        const select = document.getElementById("theme_select");
+        if (!(select instanceof HTMLSelectElement)) {
+          return;
+        }
+        const theme = currentTheme();
+        if (select.value !== theme) {
+          select.value = theme;
+        }
+      }
+
+      applyTheme(currentTheme());
+
+      document.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) {
+          return;
+        }
+        if (target.id === "theme_select") {
+          applyTheme(target.value);
+        }
+      });
+
+      const observer = new MutationObserver(() => {
+        syncThemeSelect();
+      });
+      observer.observe(document.getElementById("app"), { childList: true, subtree: true });
+
       window.__PYWASM_RUNTIME_CONFIG__ = {
         websocket: { path: "/ws" },
         mount: { elementId: "app" }
       };
     </script>
-    <script type="module" src="/pywasm-assets/src/main.js"></script>
+    <script type="module" src="/pywasm-assets/src/main.js?v=20260313b"></script>
   </body>
 </html>

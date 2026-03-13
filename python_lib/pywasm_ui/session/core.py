@@ -103,6 +103,19 @@ class PyWasmSession:
     def on_change(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
         self.connect(widget_or_id, "change", handler)
 
+    def on_input(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.connect(widget_or_id, "input", handler)
+
+    def on_hover(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        # Hover semantic is mapped to mouseenter for predictable single-fire behavior.
+        self.connect(widget_or_id, "mouseenter", handler)
+
+    def on_focus(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.connect(widget_or_id, "focus", handler)
+
+    def on_blur(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.connect(widget_or_id, "blur", handler)
+
     def on_click_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
         self.register_typed_event_handler(
             "click",
@@ -113,6 +126,34 @@ class PyWasmSession:
     def on_change_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
         self.register_typed_event_handler(
             "change",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
+    def on_input_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "input",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
+    def on_hover_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "mouseenter",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
+    def on_focus_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "focus",
+            self._resolve_widget_id(widget_or_id),
+            handler,
+        )
+
+    def on_blur_typed(self, widget_or_id: WasmWidget | str, handler: CompatibleEventHandler) -> None:
+        self.register_typed_event_handler(
+            "blur",
             self._resolve_widget_id(widget_or_id),
             handler,
         )
@@ -186,8 +227,27 @@ class PyWasmSession:
         return widget.clone()
 
     def _register_widget_handlers(self, widget: WasmWidget) -> None:
+        declared_events: list[str] = []
+
+        existing_event = widget.props.get("__event")
+        if isinstance(existing_event, str) and existing_event:
+            declared_events.append(existing_event)
+
+        existing_events = widget.props.get("__events")
+        if isinstance(existing_events, list):
+            for event_kind in existing_events:
+                if isinstance(event_kind, str) and event_kind and event_kind not in declared_events:
+                    declared_events.append(event_kind)
+
         for event_kind, handler in widget.iter_event_handlers():
             self.register_event_handler(event_kind, widget.id, handler)
+            if event_kind not in declared_events:
+                declared_events.append(event_kind)
+
+        if declared_events:
+            widget.props["__events"] = declared_events
+            widget.props["__event"] = declared_events[0]
+            widget.props.setdefault("__pending_class", "widget-pending")
 
     def _merge_style_inputs(
         self,
@@ -446,15 +506,16 @@ class PyWasmSession:
         if sec is None:
             raise ProtocolViolationError("invalid-session")
 
-        # Wrapper mode: accept raw events without client-side signature.
-        if incoming.mac is not None:
-            event_dict = incoming.event.model_dump()
-            if not self._security.verify_event_hmac(sec, event_dict, incoming.mac):
-                raise ProtocolViolationError("invalid-mac")
-            if incoming.event.nonce is None:
-                raise ProtocolViolationError("invalid-nonce")
-            if not self._security.verify_nonce(sec, incoming.event.nonce):
-                raise ProtocolViolationError("invalid-nonce")
+        if incoming.mac is None:
+            raise ProtocolViolationError("missing-mac")
+
+        event_dict = incoming.event.model_dump()
+        if not self._security.verify_event_hmac(sec, event_dict, incoming.mac):
+            raise ProtocolViolationError("invalid-mac")
+        if incoming.event.nonce is None:
+            raise ProtocolViolationError("invalid-nonce")
+        if not self._security.verify_nonce(sec, incoming.event.nonce):
+            raise ProtocolViolationError("invalid-nonce")
 
         incoming.event.value = self._normalize_incoming_value(incoming.event.value)
 

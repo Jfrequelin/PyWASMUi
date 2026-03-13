@@ -48,13 +48,6 @@ EXAMPLE_CASES = [
         "after_text": "Theme: Active",
     },
     {
-        "name": "fastapi_04_template",
-        "framework": "fastapi",
-        "target": "server.app.examples.fastapi:example_04_app",
-        "initial_id": "title_label",
-        "initial_text": "Shared template active",
-    },
-    {
         "name": "fastapi_server",
         "framework": "fastapi",
         "target": "server.app.examples.fastapi:app",

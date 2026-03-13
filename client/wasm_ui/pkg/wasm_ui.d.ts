@@ -20,8 +20,8 @@ export interface InitOutput {
     readonly wasm_on_websocket_open: () => void;
     readonly wasm_set_connection_status: (a: number, b: number) => void;
     readonly wasm_set_incoming_message_handler: (a: any) => void;
-    readonly wasm_bindgen__closure__destroy__heb41e255cf6f2b3c: (a: number, b: number) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h4d63909a99279f2e: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__closure__destroy__h91773a5ae191ced5: (a: number, b: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h92e87cc08a86197c: (a: number, b: number, c: any) => void;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;

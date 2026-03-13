@@ -219,7 +219,12 @@ class WasmWidget:
     def __post_init__(self) -> None:
         self.props = normalize_widget_props(self.props)
         # Base behavior: interactive widgets get a standard pending visual feedback class.
-        if isinstance(self.props.get("__event"), str):
+        has_single_event = isinstance(self.props.get("__event"), str)
+        has_event_list = isinstance(self.props.get("__events"), list) and any(
+            isinstance(event_kind, str) and event_kind
+            for event_kind in self.props.get("__events", [])
+        )
+        if has_single_event or has_event_list:
             self.props.setdefault("__pending_class", "widget-pending")
         initial_style = (
             self.props.get("style")
@@ -241,6 +246,19 @@ class WasmWidget:
 
     def on_change(self, handler: "CompatibleEventHandler") -> "WasmWidget":
         return self.on("change", handler)
+
+    def on_input(self, handler: "CompatibleEventHandler") -> "WasmWidget":
+        return self.on("input", handler)
+
+    def on_hover(self, handler: "CompatibleEventHandler") -> "WasmWidget":
+        # Hover semantic is mapped to mouseenter for predictable single-fire behavior.
+        return self.on("mouseenter", handler)
+
+    def on_focus(self, handler: "CompatibleEventHandler") -> "WasmWidget":
+        return self.on("focus", handler)
+
+    def on_blur(self, handler: "CompatibleEventHandler") -> "WasmWidget":
+        return self.on("blur", handler)
 
     def command(self, handler: "CompatibleEventHandler") -> "WasmWidget":
         # Tkinter-like alias for click callbacks.
@@ -307,6 +325,51 @@ class WasmWidget:
         current = list(classes) if isinstance(classes, list) else []
         to_remove = {name.strip() for name in class_names if name.strip()}
         self.classes([name for name in current if name not in to_remove])
+        return self
+
+    def tooltip(
+        self,
+        text: str | None,
+        *,
+        delay_ms: int = 2000,
+        include_native_title: bool = False,
+    ) -> "WasmWidget":
+        """Attach a reusable tooltip to any widget.
+
+        Usage:
+            widget.tooltip("Helpful details")
+        """
+
+        attrs_raw = self.props.get("attrs")
+        attrs: dict[str, Any] = dict(attrs_raw) if isinstance(attrs_raw, dict) else {}
+
+        normalized_text = (text or "").strip()
+        if not normalized_text:
+            attrs.pop("data-tooltip", None)
+            attrs.pop("data-tooltip-delay-ms", None)
+            attrs.pop("title", None)
+            style_raw = self.props.get("style")
+            if isinstance(style_raw, dict):
+                style_raw.pop("--pywasm-tooltip-delay-ms", None)
+            self.remove_class("pywasm-tooltip-host")
+            self.props["attrs"] = attrs
+            return self
+
+        safe_delay_ms = max(0, int(delay_ms))
+        attrs["data-tooltip"] = normalized_text
+        attrs["data-tooltip-delay-ms"] = str(safe_delay_ms)
+        if include_native_title:
+            attrs["title"] = normalized_text
+        else:
+            attrs.pop("title", None)
+
+        style_raw = self.props.get("style")
+        style_map: dict[str, Any] = dict(style_raw) if isinstance(style_raw, dict) else {}
+        style_map["--pywasm-tooltip-delay-ms"] = str(safe_delay_ms)
+
+        self.props["attrs"] = attrs
+        self.props["style"] = style_map
+        self.add_class("pywasm-tooltip-host")
         return self
 
     def iter_event_handlers(self) -> Iterator[tuple[str, "EventHandler"]]:

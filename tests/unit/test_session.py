@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import json
+from typing import Any, cast
 
 import pytest
 
@@ -26,6 +27,27 @@ def _sign(secret: str, event: dict[str, object]) -> str:
     )
     digest = hmac.new(secret.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).digest()
     return base64.b64encode(digest).decode("utf-8")
+
+
+def _signed_event_payload(
+    init: dict[str, Any],
+    *,
+    kind: str,
+    widget_id: str,
+    value: object = None,
+    nonce: int = 1,
+) -> dict[str, object]:
+    event = {"kind": kind, "id": widget_id, "value": value, "nonce": nonce}
+    session_ref = cast(dict[str, Any], init["session"])
+    token = cast(str, session_ref["token"])
+    client_secret = cast(str, init["client_secret"])
+    return {
+        "protocol": 1,
+        "type": "event",
+        "session": {"token": token},
+        "event": event,
+        "mac": _sign(client_secret, event),
+    }
 
 
 def test_bootstrap_messages_include_init_and_creates() -> None:
@@ -65,7 +87,7 @@ def test_callback_handler_drives_update_patch() -> None:
     assert responses[0]["patch"]["text"] == "Count=1"
 
 
-def test_unsigned_event_is_accepted_in_wrapper_mode() -> None:
+def test_unsigned_event_is_rejected_when_mac_is_missing() -> None:
     session = PyWasmSession(SecurityManager(server_secret=b"test-server-secret"))
     init = json.loads(session.bootstrap_messages()[0])
 
@@ -77,10 +99,8 @@ def test_unsigned_event_is_accepted_in_wrapper_mode() -> None:
         "event": event,
     }
 
-    responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
-
-    assert responses[0]["type"] == "update"
-    assert responses[0]["patch"]["id"] == "label1"
+    with pytest.raises(ProtocolViolationError, match="missing-mac"):
+        session.handle_client_message(json.dumps(payload))
 
 
 def test_invalid_mac_raises_protocol_violation() -> None:
@@ -104,13 +124,7 @@ def test_bootstrap_replays_previous_commands_after_session_started() -> None:
     session = PyWasmSession(SecurityManager(server_secret=b"test-server-secret"))
     init = json.loads(session.bootstrap_messages()[0])
 
-    event = {"kind": "click", "id": "btn1", "value": None}
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": event,
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn1", nonce=1)
 
     first_responses = [
         json.loads(msg)
@@ -138,12 +152,7 @@ def test_style_patch_is_replayed_on_reconnect_bootstrap() -> None:
 
     session.register_event_handler("click", "btn1", on_click)
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn1", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn1", nonce=1)
     session.handle_client_message(json.dumps(payload))
 
     reconnect_bootstrap = [json.loads(msg) for msg in session.bootstrap_messages()]
@@ -210,12 +219,7 @@ def test_widget_on_click_callback_is_bound_during_creation() -> None:
     )
     init = json.loads(session.bootstrap_messages()[0])
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn_custom", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn_custom", nonce=1)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
 
@@ -234,12 +238,7 @@ def test_message_create_registers_widget_bound_callbacks() -> None:
     created = ButtonWidget(id="btn_dynamic", parent="root", text="Dyn", on_click=on_click)
     session.message_create(created)
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn_dynamic", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn_dynamic", nonce=1)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
 
@@ -251,12 +250,7 @@ def test_event_processing_emits_ack_for_nonce() -> None:
     session = PyWasmSession(SecurityManager(server_secret=b"test-server-secret"))
     init = json.loads(session.bootstrap_messages()[0])
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn1", "value": None, "nonce": 42},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn1", nonce=42)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
 
@@ -330,12 +324,7 @@ def test_session_pythonic_helpers_connect_and_manipulate_widgets() -> None:
     session.create(button)
     session.on_click(button, on_click)
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn_helper", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn_helper", nonce=1)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
     assert responses[0]["type"] == "update"
@@ -367,12 +356,7 @@ def test_on_click_accepts_session_only_handler() -> None:
     session.on_click(button, on_click)
     session.data["n"] = 0
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn_session_only", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn_session_only", nonce=1)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
     assert responses[0]["type"] == "update"
@@ -392,12 +376,7 @@ def test_on_click_accepts_zero_arg_handler() -> None:
 
     session.on_click(button, on_click)
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {"kind": "click", "id": "btn_zero", "value": None},
-    }
+    payload = _signed_event_payload(init, kind="click", widget_id="btn_zero", nonce=1)
 
     responses = [json.loads(msg) for msg in session.handle_client_message(json.dumps(payload))]
     assert responses[0]["type"] == "update"
@@ -416,16 +395,13 @@ def test_incoming_event_values_are_auto_coerced_for_handlers() -> None:
 
     session.register_event_handler("change", "btn1", on_change)
 
-    payload = {
-        "protocol": 1,
-        "type": "event",
-        "session": {"token": init["session"]["token"]},
-        "event": {
-            "kind": "change",
-            "id": "btn1",
-            "value": "42",
-        },
-    }
+    payload = _signed_event_payload(
+        init,
+        kind="change",
+        widget_id="btn1",
+        value="42",
+        nonce=1,
+    )
 
     session.handle_client_message(json.dumps(payload))
     assert captured["value"] == 42
