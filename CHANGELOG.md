@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-13] - Open Source Readiness Pack
+
+### Added
+- Added project license file `LICENSE` (MIT).
+- Added contribution and governance documents:
+  - `CONTRIBUTING.md`
+  - `CODE_OF_CONDUCT.md`
+  - `SECURITY.md`
+- Added GitHub collaboration templates:
+  - `.github/ISSUE_TEMPLATE/bug_report.yml`
+  - `.github/ISSUE_TEMPLATE/feature_request.yml`
+  - `.github/pull_request_template.md`
+
+## [2026-03-13] - Poetry Packaging and CI Reliability Updates
+
+### Added
+- Added Poetry lockfile `python_lib/poetry.lock` and Poetry-based packaging workflow.
+- Added PyPI publish workflow `/.github/workflows/pypi-publish.yml`.
+
+### Changed
+- Migrated Python package build configuration in `python_lib/pyproject.toml` to `poetry-core` backend.
+- Added Makefile targets for Poetry install/build/publish (`poetry-install`, `poetry-build`, `poetry-publish-*`).
+- Updated release workflow to build Python distributions with Poetry.
+- Updated docs for Poetry/PyPI usage in:
+  - `README.md`
+  - `python_lib/README.md`
+  - `doc/fr/getting-started.md`
+- Fixed WASM event signing by restoring HMAC `mac` generation in client runtime (`client/wasm_ui/src/*`) and rebuilt packaged WASM assets.
+- Hardened Selenium integration tests to reduce flaky click and async timing failures.
+- Stabilized strict pylint gate via test hardening and lint configuration alignment.
+
 ## [2026-03-13] - Widget Catalog, Themes, and Security Hardening
 
 ### Added
