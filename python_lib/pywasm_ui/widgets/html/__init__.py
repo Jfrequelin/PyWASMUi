@@ -1,3 +1,6 @@
+from .AccordionHeaderWidget import AccordionHeaderWidget
+from .AccordionItemWidget import AccordionItemWidget
+from .AccordionWidget import AccordionWidget
 from .AlertWidget import AlertWidget
 from .BadgeWidget import BadgeWidget
 from .ButtonWidget import ButtonWidget
@@ -18,11 +21,16 @@ from .RowWidget import RowWidget
 from .SelectWidget import SelectWidget
 from .SliderWidget import SliderWidget
 from .StackWidget import StackWidget
+from .TabItemWidget import TabItemWidget
+from .TabsWidget import TabsWidget
 from .TextAreaWidget import TextAreaWidget
 from .TextInputWidget import TextInputWidget
 from .WindowWidget import WindowWidget
 
 __all__ = [
+    "AccordionWidget",
+    "AccordionItemWidget",
+    "AccordionHeaderWidget",
     "AlertWidget",
     "BadgeWidget",
     "CardWidget",
@@ -43,6 +51,8 @@ __all__ = [
     "SelectWidget",
     "SliderWidget",
     "StackWidget",
+    "TabsWidget",
+    "TabItemWidget",
     "TextAreaWidget",
     "TextInputWidget",
     "ListViewWidget",

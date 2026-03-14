@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-14] - Tabs and Accordion Widgets
+
+### Added
+- Added new HTML widget classes for tabbed and accordion interfaces:
+  - `python_lib/pywasm_ui/widgets/html/TabsWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/TabItemWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/AccordionWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/AccordionItemWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/AccordionHeaderWidget.py`
+- Exported the new widgets in:
+  - `python_lib/pywasm_ui/widgets/html/__init__.py`
+  - `python_lib/pywasm_ui/widgets/__init__.py`
+  - `python_lib/pywasm_ui/__init__.py`
+
+### Changed
+- Extended the example catalog in `server/app/examples/fastapi/10_widgets_catalog_fastapi.py` with a dedicated section demonstrating tabs and accordion usage.
+- Extended widget unit coverage in `tests/unit/test_widgets.py` for payload structure, events, and kind-convention checks of the new widgets.
+
 ## [2026-03-14] - Automatic Theme Loading for Example 10
 
 ### Added

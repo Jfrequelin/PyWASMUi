@@ -8,6 +8,9 @@ from typing import Any
 from fastapi import FastAPI
 
 from pywasm_ui import (
+    AccordionHeaderWidget,
+    AccordionItemWidget,
+    AccordionWidget,
     AlertWidget,
     BadgeWidget,
     ButtonWidget,
@@ -31,6 +34,8 @@ from pywasm_ui import (
     SliderWidget,
     StackWidget,
     Style,
+    TabItemWidget,
+    TabsWidget,
     TextAreaWidget,
     TextInputWidget,
     WasmWidget,
@@ -506,6 +511,27 @@ def _build_features_section() -> list[WasmWidget]:
         LabelWidget(id="list_item_2_text", parent="list_item_2", text="- Les callbacks Python pilotent les interactions utilisateur."),
         ContainerWidget(id="list_item_3", parent="list_features"),
         LabelWidget(id="list_item_3_text", parent="list_item_3", text="- Le flux WebSocket synchronise les mises a jour en temps reel."),
+        DividerWidget(id="divider_tabs_accordion", parent="stack_features"),
+        HeadingWidget(id="heading_tabs_accordion", parent="stack_features", text="Nouveaux widgets: Tabs + Accordion", level=3),
+        TabsWidget(id="tabs_demo", parent="stack_features"),
+        TabItemWidget(id="tab_demo_overview", parent="tabs_demo", text="Overview", value="overview", selected=True),
+        TabItemWidget(id="tab_demo_metrics", parent="tabs_demo", text="Metrics", value="metrics"),
+        TabItemWidget(id="tab_demo_settings", parent="tabs_demo", text="Settings", value="settings"),
+        AccordionWidget(id="accordion_demo", parent="stack_features"),
+        AccordionItemWidget(id="accordion_demo_item_1", parent="accordion_demo", open_by_default=True),
+        AccordionHeaderWidget(id="accordion_demo_item_1_header", parent="accordion_demo_item_1", text="Qu'est-ce que TabsWidget ?"),
+        ParagraphWidget(
+            id="accordion_demo_item_1_content",
+            parent="accordion_demo_item_1",
+            text="TabsWidget permet d'organiser des vues en onglets cliquables cote serveur.",
+        ),
+        AccordionItemWidget(id="accordion_demo_item_2", parent="accordion_demo"),
+        AccordionHeaderWidget(id="accordion_demo_item_2_header", parent="accordion_demo_item_2", text="Qu'est-ce que AccordionWidget ?"),
+        ParagraphWidget(
+            id="accordion_demo_item_2_content",
+            parent="accordion_demo_item_2",
+            text="AccordionWidget structure des sections repliables composees avec details/summary.",
+        ),
     ]
 
 

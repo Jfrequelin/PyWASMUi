@@ -1,5 +1,8 @@
 from .base import Style, WasmWidget, Widget, WidgetStyle
 from .html import (
+    AccordionHeaderWidget,
+    AccordionItemWidget,
+    AccordionWidget,
     AlertWidget,
     BadgeWidget,
     ButtonWidget,
@@ -20,6 +23,8 @@ from .html import (
     SelectWidget,
     SliderWidget,
     StackWidget,
+    TabItemWidget,
+    TabsWidget,
     TextAreaWidget,
     TextInputWidget,
     WindowWidget,
@@ -32,6 +37,9 @@ __all__ = [
     "Style",
     "WidgetStyle",
     "Widget",
+    "AccordionWidget",
+    "AccordionItemWidget",
+    "AccordionHeaderWidget",
     "WindowWidget",
     "ContainerWidget",
     "CardWidget",
@@ -55,6 +63,8 @@ __all__ = [
     "TextAreaWidget",
     "SliderWidget",
     "ListViewWidget",
+    "TabsWidget",
+    "TabItemWidget",
     "ConnectionStatusWidget",
     "WidgetTree",
 ]

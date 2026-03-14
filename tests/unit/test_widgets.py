@@ -4,6 +4,9 @@ import importlib
 import pywasm_ui.widgets.html as html_widgets
 
 from pywasm_ui.widgets import (
+    AccordionHeaderWidget,
+    AccordionItemWidget,
+    AccordionWidget,
     AlertWidget,
     BadgeWidget,
     ButtonWidget,
@@ -26,10 +29,12 @@ from pywasm_ui.widgets import (
     SliderWidget,
     StackWidget,
     Style,
+    TabItemWidget,
+    TabsWidget,
     TextAreaWidget,
-        TextInputWidget,
+    TextInputWidget,
     WasmWidget,
-        WindowWidget,
+    WindowWidget,
     WidgetTree,
 )
 
@@ -249,6 +254,45 @@ def test_new_form_widgets_payloads_and_handlers() -> None:
     assert modal_payload["attrs"]["open"] == "true"
 
 
+def test_tabs_and_accordion_widgets_payloads_and_handlers() -> None:
+    def _noop(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+        return None
+
+    tabs = TabsWidget(id="tabs_1")
+    tab_item = TabItemWidget(
+        id="tab_1",
+        parent="tabs_1",
+        text="Overview",
+        value="overview",
+        selected=True,
+        on_click=_noop,
+    )
+    accordion = AccordionWidget(id="accordion_1")
+    accordion_item = AccordionItemWidget(id="accordion_item_1", parent="accordion_1", open_by_default=True)
+    accordion_header = AccordionHeaderWidget(id="accordion_header_1", parent="accordion_item_1", text="Details")
+
+    tabs_payload = tabs.to_payload()["props"]
+    assert tabs_payload["__tag"] == "div"
+    assert tabs_payload["attrs"]["role"] == "tablist"
+
+    tab_payload = tab_item.to_payload()["props"]
+    assert tab_payload["__tag"] == "button"
+    assert tab_payload["attrs"]["data-tab-value"] == "overview"
+    assert "click" in dict(tab_item.iter_event_handlers())
+
+    accordion_payload = accordion.to_payload()["props"]
+    assert accordion_payload["__tag"] == "div"
+    assert "accordion" in accordion_payload["classes"]
+
+    item_payload = accordion_item.to_payload()["props"]
+    assert item_payload["__tag"] == "details"
+    assert item_payload["attrs"]["open"] == "true"
+
+    header_payload = accordion_header.to_payload()["props"]
+    assert header_payload["__tag"] == "summary"
+    assert header_payload["text"] == "Details"
+
+
 def test_html_widget_exports_match_available_widget_classes() -> None:
     exported = set(html_widgets.__all__)
     discovered = {
@@ -265,6 +309,9 @@ def test_html_widget_exports_match_available_widget_classes() -> None:
 
 def test_html_widget_kinds_follow_class_name_convention() -> None:
     widgets = [
+        AccordionWidget(id="accordion_kind"),
+        AccordionItemWidget(id="accordion_item_kind", parent="accordion_kind"),
+        AccordionHeaderWidget(id="accordion_header_kind", parent="accordion_item_kind", text="Header"),
         AlertWidget(id="alert_kind"),
         BadgeWidget(id="badge_kind"),
         ButtonWidget(id="button_kind"),
@@ -285,6 +332,8 @@ def test_html_widget_kinds_follow_class_name_convention() -> None:
         SelectWidget(id="select_kind"),
         SliderWidget(id="slider_kind"),
         StackWidget(id="stack_kind"),
+        TabsWidget(id="tabs_kind"),
+        TabItemWidget(id="tab_item_kind", parent="tabs_kind", text="Tab"),
         TextAreaWidget(id="text_area_kind"),
         TextInputWidget(id="text_input_kind"),
         WindowWidget(id="window_kind"),
