@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-14] - Media Widgets and Layering Defaults
+
+### Added
+- Added new HTML content widgets:
+  - `python_lib/pywasm_ui/widgets/html/LinkWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/ImageWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/CodeBlockWidget.py`
+- Exported the new widgets in:
+  - `python_lib/pywasm_ui/widgets/html/__init__.py`
+  - `python_lib/pywasm_ui/widgets/__init__.py`
+  - `python_lib/pywasm_ui/__init__.py`
+
+### Changed
+- Reorganized `server/app/examples/fastapi/10_widgets_catalog_fastapi.py` by functional themes (Organisation, Navigation, Media et ressources, Data et feedback) and enriched interactions.
+- Updated the image demo source in example 10 to use a valid inline SVG data URI for deterministic rendering.
+- Added dedicated Tabs and Accordion styling in `server/app/examples/web/themes/base.css`.
+- Hardened tooltip and interaction layering in:
+  - `server/app/examples/web/themes/base.css`
+  - `server/app/examples/web/themes/ladys.css`
+- Added built-in default z-index layering for widget internals:
+  - tooltip style variables in `python_lib/pywasm_ui/widgets/base.py`
+  - modal default style in `python_lib/pywasm_ui/widgets/html/ModalWidget.py`
+- Extended widget unit tests in `tests/unit/test_widgets.py` for default z-index assertions.
+
 ## [2026-03-14] - Tabs and Accordion Widgets
 
 ### Added

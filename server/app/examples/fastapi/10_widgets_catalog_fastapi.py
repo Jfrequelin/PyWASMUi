@@ -21,12 +21,15 @@ from pywasm_ui import (
     DatePickerWidget,
     DividerWidget,
     HeadingWidget,
+    ImageWidget,
     IconButtonWidget,
     LabelWidget,
+    LinkWidget,
     ListViewWidget,
     ModalWidget,
     OptionWidget,
     ParagraphWidget,
+    CodeBlockWidget,
     ProgressWidget,
     PyWasmSession,
     RowWidget,
@@ -289,6 +292,52 @@ def on_notes_change(session: PyWasmSession, event: EventPayload) -> CallbackResp
     return session.update("paragraph_notes", text=f"Apercu de vos notes: {preview}")
 
 
+def _activate_demo_tab(session: PyWasmSession, active_tab: str) -> list[CallbackResponse]:
+    tabs = [
+        ("overview", "tab_demo_overview", "tab_panel_overview"),
+        ("metrics", "tab_demo_metrics", "tab_panel_metrics"),
+        ("settings", "tab_demo_settings", "tab_panel_settings"),
+    ]
+    responses: list[CallbackResponse] = [
+        session.update("tab_active_value", text=f"Onglet actif: {active_tab.title()}"),
+        session.update("badge_state", text=f"Navigation onglets: {active_tab}"),
+    ]
+    for value, tab_id, panel_id in tabs:
+        is_active = value == active_tab
+        responses.append(
+            session.update(
+                tab_id,
+                attrs={"aria-selected": "true" if is_active else "false"},
+                style={
+                    "border-bottom": "2px solid #0f766e" if is_active else "2px solid transparent",
+                    "font-weight": "700" if is_active else "500",
+                    "opacity": "1" if is_active else "0.7",
+                },
+            )
+        )
+        responses.append(
+            session.update(
+                panel_id,
+                style={
+                    "display": "block" if is_active else "none",
+                },
+            )
+        )
+    return responses
+
+
+def on_tab_overview_click(session: PyWasmSession) -> list[CallbackResponse]:
+    return _activate_demo_tab(session, "overview")
+
+
+def on_tab_metrics_click(session: PyWasmSession) -> list[CallbackResponse]:
+    return _activate_demo_tab(session, "metrics")
+
+
+def on_tab_settings_click(session: PyWasmSession) -> list[CallbackResponse]:
+    return _activate_demo_tab(session, "settings")
+
+
 # Step 2: widget builders for each section of the catalog page.
 def _build_interactive_widgets() -> InteractiveWidgets:
     name_input = TextInputWidget(id="input_name", parent="stack_interactions", value="")
@@ -419,7 +468,6 @@ def _build_showcase_header(widgets: InteractiveWidgets) -> list[WasmWidget]:
         ),
         DividerWidget(id="divider_top", parent="stack_header"),
         RowWidget(id="row_actions", parent="stack_header", gap="10px"),
-        BadgeWidget(id="badge_state", parent="row_actions", text="Pret", variant="info"),
         LabelWidget(id="label_count_1", parent="row_actions", text="Compteur A: 0"),
         widgets.btn_1,
         LabelWidget(id="label_count_2", parent="row_actions", text="Compteur B: 0"),
@@ -500,6 +548,14 @@ def _build_interaction_section(widgets: InteractiveWidgets, theme_names: list[st
 
 def _build_features_section() -> list[WasmWidget]:
     return [
+        HeadingWidget(id="heading_features_themes", parent="stack_features", text="Widgets organises par theme", level=3),
+        ParagraphWidget(
+            id="paragraph_features_themes",
+            parent="stack_features",
+            text="Cette section regroupe les widgets par usage: organisation, media et data/feedback.",
+        ),
+        DividerWidget(id="divider_theme_organisation", parent="stack_features"),
+        HeadingWidget(id="heading_theme_organisation", parent="stack_features", text="Theme: Organisation", level=4),
         ListViewWidget(
             id="list_features",
             parent="stack_features",
@@ -511,12 +567,59 @@ def _build_features_section() -> list[WasmWidget]:
         LabelWidget(id="list_item_2_text", parent="list_item_2", text="- Les callbacks Python pilotent les interactions utilisateur."),
         ContainerWidget(id="list_item_3", parent="list_features"),
         LabelWidget(id="list_item_3_text", parent="list_item_3", text="- Le flux WebSocket synchronise les mises a jour en temps reel."),
-        DividerWidget(id="divider_tabs_accordion", parent="stack_features"),
-        HeadingWidget(id="heading_tabs_accordion", parent="stack_features", text="Nouveaux widgets: Tabs + Accordion", level=3),
+        HeadingWidget(id="heading_tabs_accordion", parent="stack_features", text="Sous-theme: Navigation (Tabs + Accordion)", level=4),
+        ParagraphWidget(
+            id="paragraph_tabs_accordion_intro",
+            parent="stack_features",
+            text="Tabs et Accordion permettent de structurer des contenus longs sans surcharger la page.",
+        ),
         TabsWidget(id="tabs_demo", parent="stack_features"),
-        TabItemWidget(id="tab_demo_overview", parent="tabs_demo", text="Overview", value="overview", selected=True),
-        TabItemWidget(id="tab_demo_metrics", parent="tabs_demo", text="Metrics", value="metrics"),
-        TabItemWidget(id="tab_demo_settings", parent="tabs_demo", text="Settings", value="settings"),
+        TabItemWidget(
+            id="tab_demo_overview",
+            parent="tabs_demo",
+            text="Overview",
+            value="overview",
+            selected=True,
+            on_click=on_tab_overview_click,
+        ),
+        TabItemWidget(
+            id="tab_demo_metrics",
+            parent="tabs_demo",
+            text="Metrics",
+            value="metrics",
+            on_click=on_tab_metrics_click,
+        ),
+        TabItemWidget(
+            id="tab_demo_settings",
+            parent="tabs_demo",
+            text="Settings",
+            value="settings",
+            on_click=on_tab_settings_click,
+        ),
+        LabelWidget(id="tab_active_value", parent="stack_features", text="Onglet actif: Overview"),
+        ContainerWidget(
+            id="tab_panels_demo",
+            parent="stack_features",
+            style=Style(border="1px solid #e2e8f0", border_radius="8px", padding="10px"),
+        ),
+        ContainerWidget(id="tab_panel_overview", parent="tab_panels_demo", style=Style(display="block")),
+        ParagraphWidget(
+            id="tab_panel_overview_text",
+            parent="tab_panel_overview",
+            text="Overview: utilisez TabsWidget pour separer des contenus sans changer de page.",
+        ),
+        ContainerWidget(id="tab_panel_metrics", parent="tab_panels_demo", style=Style(display="none")),
+        ParagraphWidget(
+            id="tab_panel_metrics_text",
+            parent="tab_panel_metrics",
+            text="Metrics: ce panneau peut presenter des indicateurs, courbes ou etats temps reel.",
+        ),
+        ContainerWidget(id="tab_panel_settings", parent="tab_panels_demo", style=Style(display="none")),
+        ParagraphWidget(
+            id="tab_panel_settings_text",
+            parent="tab_panel_settings",
+            text="Settings: placez ici des formulaires de configuration contextuelle.",
+        ),
         AccordionWidget(id="accordion_demo", parent="stack_features"),
         AccordionItemWidget(id="accordion_demo_item_1", parent="accordion_demo", open_by_default=True),
         AccordionHeaderWidget(id="accordion_demo_item_1_header", parent="accordion_demo_item_1", text="Qu'est-ce que TabsWidget ?"),
@@ -531,6 +634,71 @@ def _build_features_section() -> list[WasmWidget]:
             id="accordion_demo_item_2_content",
             parent="accordion_demo_item_2",
             text="AccordionWidget structure des sections repliables composees avec details/summary.",
+        ),
+        AccordionItemWidget(id="accordion_demo_item_3", parent="accordion_demo"),
+        AccordionHeaderWidget(
+            id="accordion_demo_item_3_header",
+            parent="accordion_demo_item_3",
+            text="Quand utiliser Tabs vs Accordion ?",
+        ),
+        ParagraphWidget(
+            id="accordion_demo_item_3_content",
+            parent="accordion_demo_item_3",
+            text=(
+                "Tabs: navigation horizontale entre sections equivalentes. "
+                "Accordion: details progressifs sur une liste de sujets."
+            ),
+        ),
+        DividerWidget(id="divider_theme_media", parent="stack_features"),
+        HeadingWidget(id="heading_theme_media", parent="stack_features", text="Theme: Media et ressources", level=4),
+        ParagraphWidget(
+            id="paragraph_rich_content_intro",
+            parent="stack_features",
+            text="Ce bloc montre des contenus riches (lien, image, extrait de code) composes cote serveur.",
+        ),
+        LinkWidget(
+            id="link_demo_docs",
+            parent="stack_features",
+            text="Ouvrir la documentation PyWASMui",
+            href="https://github.com/Jfrequelin/PyWASMUi",
+            target="_blank",
+            rel="noopener noreferrer",
+        ),
+        ImageWidget(
+            id="image_demo_preview",
+            parent="stack_features",
+            src=(
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 140'%3E"
+                "%3Crect width='420' height='140' fill='%23e2e8f0'/%3E"
+                "%3Crect x='10' y='10' width='400' height='120' rx='10' fill='%230f172a'/%3E"
+                "%3Ctext x='24' y='72' fill='%23e2e8f0' font-size='20' font-family='monospace'%3E"
+                "PyWASMui ImageWidget demo%3C/text%3E%3C/svg%3E"
+            ),
+            alt="Apercu ImageWidget",
+            style=Style(max_width="100%", border="1px solid #e2e8f0", border_radius="6px"),
+        ),
+        CodeBlockWidget(
+            id="code_demo_snippet",
+            parent="stack_features",
+            language="python",
+            text=(
+                "from pywasm_ui import pywasm_ui\n"
+                "pywasm_ui.fastapi.bootstrap_app(app, frontend_root)"
+            ),
+            style=Style(background_color="#0f172a", color="#e2e8f0", padding="10px", border_radius="6px"),
+        ),
+        DividerWidget(id="divider_theme_feedback", parent="stack_features"),
+        HeadingWidget(id="heading_theme_feedback", parent="stack_features", text="Theme: Data et feedback", level=4),
+        RowWidget(id="row_theme_feedback", parent="stack_features", gap="10px"),
+        BadgeWidget(id="badge_state", parent="row_theme_feedback", text="Derniere action: pret", variant="info"),
+        BadgeWidget(id="badge_feedback_info", parent="row_theme_feedback", text="Info", variant="info"),
+        BadgeWidget(id="badge_feedback_success", parent="row_theme_feedback", text="Success", variant="success"),
+        ProgressWidget(id="progress_theme_feedback", parent="stack_features", value=72, max_value=100),
+        AlertWidget(
+            id="alert_theme_feedback",
+            parent="stack_features",
+            text="Les widgets de feedback visualisent l'etat des actions et des traitements.",
+            level="info",
         ),
     ]
 
@@ -596,10 +764,15 @@ def _build_initial_widgets(theme_names: list[str]) -> list[WasmWidget]:
                 padding="22px",
                 position="relative",
                 overflow="visible",
-                z_index="30",
+                z_index="12000",
             ),
         ),
-        StackWidget(id="stack_interactions", parent="card_interactions", gap="10px"),
+        StackWidget(
+            id="stack_interactions",
+            parent="card_interactions",
+            gap="10px",
+            style=Style(position="relative", overflow="visible", z_index="12001"),
+        ),
         CardWidget(
             id="card_features",
             parent="stack_main",

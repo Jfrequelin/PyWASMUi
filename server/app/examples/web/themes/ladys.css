@@ -60,7 +60,13 @@
 :root[data-theme="ladys"] #card_interactions {
   position: relative !important;
   overflow: visible !important;
-  z-index: 300 !important;
+  z-index: 2147482000 !important;
+}
+
+:root[data-theme="ladys"] #stack_interactions {
+  position: relative !important;
+  overflow: visible !important;
+  z-index: 2147482100 !important;
 }
 
 :root[data-theme="ladys"] #modal_anchor {
@@ -168,11 +174,15 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px) saturate(130%);
   -webkit-backdrop-filter: blur(12px) saturate(130%);
+  z-index: 2147483646 !important;
 }
 
 /* Ladys buttons use overflow:hidden for glossy effect; keep tooltip hosts visible. */
 :root[data-theme="ladys"] #app .pywasm-tooltip-host {
+  position: relative !important;
   overflow: visible !important;
+  isolation: isolate;
+  z-index: 2147483000 !important;
 }
 
 :root[data-theme="ladys"] #app hr {

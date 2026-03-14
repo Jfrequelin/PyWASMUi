@@ -17,10 +17,13 @@ from pywasm_ui.widgets import (
     ConnectionStatusWidget,
     DividerWidget,
     HeadingWidget,
+    ImageWidget,
     IconButtonWidget,
     LabelWidget,
-        ListViewWidget,
+    LinkWidget,
+    ListViewWidget,
     ParagraphWidget,
+    CodeBlockWidget,
     ModalWidget,
     OptionWidget,
     ProgressWidget,
@@ -162,13 +165,18 @@ def test_widget_tooltip_helper_adds_and_removes_tooltip_metadata() -> None:
     assert payload["attrs"]["data-tooltip"] == "Helpful tooltip"
     assert "title" not in payload["attrs"]
     assert payload["style"]["--pywasm-tooltip-delay-ms"] == "1500"
+    assert payload["style"]["--pywasm-tooltip-host-z-index"] == "2147483000"
+    assert payload["style"]["--pywasm-tooltip-z-index"] == "2147483646"
 
     button.tooltip(None)
     cleared_payload = button.to_payload()["props"]
     attrs = cleared_payload.get("attrs", {})
+    style = cleared_payload.get("style", {})
 
     assert "data-tooltip" not in attrs
     assert "title" not in attrs
+    assert "--pywasm-tooltip-host-z-index" not in style
+    assert "--pywasm-tooltip-z-index" not in style
 
 
 def test_new_widget_series_payloads_match_framework_like_conventions() -> None:
@@ -252,6 +260,7 @@ def test_new_form_widgets_payloads_and_handlers() -> None:
     modal_payload = modal.to_payload()["props"]
     assert modal_payload["__tag"] == "dialog"
     assert modal_payload["attrs"]["open"] == "true"
+    assert modal_payload["style"]["z-index"] == "13000"
 
 
 def test_tabs_and_accordion_widgets_payloads_and_handlers() -> None:
@@ -293,6 +302,38 @@ def test_tabs_and_accordion_widgets_payloads_and_handlers() -> None:
     assert header_payload["text"] == "Details"
 
 
+def test_link_image_and_codeblock_widgets_payloads_and_handlers() -> None:
+    def _noop(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+        return None
+
+    link = LinkWidget(
+        id="link_1",
+        text="Open docs",
+        href="https://example.test/docs",
+        target="_blank",
+        rel="noopener noreferrer",
+        on_click=_noop,
+    )
+    image = ImageWidget(id="image_1", src="/themes/base.css", alt="Preview")
+    code_block = CodeBlockWidget(id="code_1", text="print('hello')", language="python")
+
+    link_payload = link.to_payload()["props"]
+    assert link_payload["__tag"] == "a"
+    assert link_payload["attrs"]["href"] == "https://example.test/docs"
+    assert link_payload["attrs"]["target"] == "_blank"
+    assert "click" in dict(link.iter_event_handlers())
+
+    image_payload = image.to_payload()["props"]
+    assert image_payload["__tag"] == "img"
+    assert image_payload["attrs"]["src"] == "/themes/base.css"
+    assert image_payload["attrs"]["loading"] == "lazy"
+
+    code_payload = code_block.to_payload()["props"]
+    assert code_payload["__tag"] == "pre"
+    assert code_payload["text"] == "print('hello')"
+    assert "language-python" in code_payload["classes"]
+
+
 def test_html_widget_exports_match_available_widget_classes() -> None:
     exported = set(html_widgets.__all__)
     discovered = {
@@ -321,12 +362,15 @@ def test_html_widget_kinds_follow_class_name_convention() -> None:
         DatePickerWidget(id="date_kind"),
         DividerWidget(id="divider_kind"),
         HeadingWidget(id="heading_kind"),
+        ImageWidget(id="image_kind"),
         IconButtonWidget(id="icon_button_kind"),
         LabelWidget(id="label_kind"),
+        LinkWidget(id="link_kind", text="Doc", href="#"),
         ListViewWidget(id="list_view_kind"),
         ModalWidget(id="modal_kind"),
         OptionWidget(id="option_kind", parent="select_kind", text="Option", value="option"),
         ParagraphWidget(id="paragraph_kind"),
+        CodeBlockWidget(id="code_kind", text="const x = 1;"),
         ProgressWidget(id="progress_kind"),
         RowWidget(id="row_kind"),
         SelectWidget(id="select_kind"),

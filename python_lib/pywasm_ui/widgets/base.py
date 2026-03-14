@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 _MISSING = object()
+DEFAULT_TOOLTIP_HOST_Z_INDEX = "2147483000"
+DEFAULT_TOOLTIP_BUBBLE_Z_INDEX = "2147483646"
 
 
 class Style:
@@ -351,6 +353,8 @@ class WasmWidget:
             style_raw = self.props.get("style")
             if isinstance(style_raw, dict):
                 style_raw.pop("--pywasm-tooltip-delay-ms", None)
+                style_raw.pop("--pywasm-tooltip-host-z-index", None)
+                style_raw.pop("--pywasm-tooltip-z-index", None)
             self.remove_class("pywasm-tooltip-host")
             self.props["attrs"] = attrs
             return self
@@ -366,6 +370,8 @@ class WasmWidget:
         style_raw = self.props.get("style")
         style_map: dict[str, Any] = dict(style_raw) if isinstance(style_raw, dict) else {}
         style_map["--pywasm-tooltip-delay-ms"] = str(safe_delay_ms)
+        style_map["--pywasm-tooltip-host-z-index"] = DEFAULT_TOOLTIP_HOST_Z_INDEX
+        style_map["--pywasm-tooltip-z-index"] = DEFAULT_TOOLTIP_BUBBLE_Z_INDEX
 
         self.props["attrs"] = attrs
         self.props["style"] = style_map

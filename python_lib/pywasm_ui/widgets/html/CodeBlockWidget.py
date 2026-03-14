@@ -6,36 +6,31 @@ from ..base import Style, WasmWidget
 from ._common import html_widget_kind, init_standard_widget
 
 
-class ModalWidget(WasmWidget):
+class CodeBlockWidget(WasmWidget):
     def __init__(
         self,
         id: str,
         parent: str = "root",
         text: str = "",
-        is_open: bool = False,
+        language: str | None = None,
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        attrs = {}
-        if is_open:
-            attrs["open"] = "true"
+        classes = ["code-block"]
+        if language is not None and language.strip():
+            classes.append(f"language-{language.strip().lower()}")
 
         super().__init__(id=id, kind=html_widget_kind(self), parent=parent, props={}, children=[])
-
         init_standard_widget(
-
             self,
             id=id,
             parent=parent,
-            tag="dialog",
+            tag="pre",
             text_prop="text",
             defaults={
                 "text": text,
-                "attrs": attrs,
+                "classes": classes,
             },
             props=props,
             style=style,
-            default_style={
-                "z-index": "13000",
-            },
         )

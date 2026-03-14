@@ -279,9 +279,121 @@ body {
   color: #0f172a;
 }
 
+/* TabsWidget / TabItemWidget */
+#app .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  padding-bottom: 6px;
+}
+
+:root[data-theme] #app .tab-item {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--surface, #ffffff) 88%, transparent);
+  box-shadow: none;
+  color: var(--text, #334155);
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-height: 34px;
+  padding: 8px 12px;
+}
+
+:root[data-theme] #app .tab-item:hover:not(:disabled) {
+  transform: none;
+  filter: none;
+  border-color: color-mix(in srgb, var(--accent, #0f766e) 36%, rgba(148, 163, 184, 0.5));
+  color: color-mix(in srgb, var(--accent, #0f766e) 78%, var(--text, #334155));
+}
+
+:root[data-theme] #app .tab-item:active:not(:disabled) {
+  transform: none;
+}
+
+:root[data-theme] #app .tab-item:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(248, 250, 252, 0.9),
+    0 0 0 5px color-mix(in srgb, var(--accent, #0f766e) 28%, transparent);
+}
+
+:root[data-theme] #app .tab-item-active,
+:root[data-theme] #app .tab-item[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent, #0f766e) 13%, var(--surface, #ffffff));
+  border-color: color-mix(in srgb, var(--accent, #0f766e) 50%, rgba(148, 163, 184, 0.5));
+  border-bottom-color: var(--accent, #0f766e);
+  color: color-mix(in srgb, var(--accent, #0f766e) 80%, #0f172a);
+}
+
+/* AccordionWidget / AccordionItemWidget / AccordionHeaderWidget */
+#app .accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:root[data-theme] #app .accordion-item {
+  background: color-mix(in srgb, var(--surface, #ffffff) 92%, transparent);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  overflow: clip;
+}
+
+:root[data-theme] #app .accordion-item[open] {
+  border-color: color-mix(in srgb, var(--accent, #0f766e) 42%, rgba(148, 163, 184, 0.35));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent, #0f766e) 14%, transparent);
+}
+
+:root[data-theme] #app .accordion-header {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 12px;
+  color: var(--title, #0f172a);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--surface, #ffffff) 75%, transparent);
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+:root[data-theme] #app .accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+:root[data-theme] #app .accordion-header::after {
+  content: "+";
+  float: right;
+  color: color-mix(in srgb, var(--accent, #0f766e) 70%, var(--text, #334155));
+  font-weight: 700;
+}
+
+:root[data-theme] #app .accordion-item[open] > .accordion-header::after {
+  content: "-";
+}
+
+:root[data-theme] #app .accordion-header:hover {
+  background: color-mix(in srgb, var(--accent, #0f766e) 10%, var(--surface, #ffffff));
+}
+
+:root[data-theme] #app .accordion-header:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(248, 250, 252, 0.95),
+    inset 0 0 0 5px color-mix(in srgb, var(--accent, #0f766e) 26%, transparent);
+}
+
+:root[data-theme] #app .accordion-item > :not(.accordion-header) {
+  margin: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--surface-border, #cbd5e1) 70%, transparent);
+}
+
 #app .pywasm-tooltip-host {
   position: relative;
-  z-index: 11999;
+  overflow: visible !important;
+  isolation: isolate;
+  z-index: var(--pywasm-tooltip-host-z-index, 2147483000);
 }
 
 #app .pywasm-tooltip-host::after {
@@ -289,7 +401,7 @@ body {
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  z-index: 12000;
+  z-index: var(--pywasm-tooltip-z-index, 2147483646);
   max-width: min(320px, 80vw);
   width: max-content;
   margin: 0;

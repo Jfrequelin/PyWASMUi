@@ -6,36 +6,33 @@ from ..base import Style, WasmWidget
 from ._common import html_widget_kind, init_standard_widget
 
 
-class ModalWidget(WasmWidget):
+class ImageWidget(WasmWidget):
     def __init__(
         self,
         id: str,
         parent: str = "root",
-        text: str = "",
-        is_open: bool = False,
+        src: str = "",
+        alt: str = "",
+        lazy: bool = True,
         props: dict[str, Any] | None = None,
         style: Style | dict[str, Any] | None = None,
     ) -> None:
-        attrs = {}
-        if is_open:
-            attrs["open"] = "true"
+        attrs: dict[str, str] = {
+            "src": src,
+            "alt": alt,
+            "loading": "lazy" if lazy else "eager",
+        }
 
         super().__init__(id=id, kind=html_widget_kind(self), parent=parent, props={}, children=[])
-
         init_standard_widget(
-
             self,
             id=id,
             parent=parent,
-            tag="dialog",
-            text_prop="text",
+            tag="img",
             defaults={
-                "text": text,
                 "attrs": attrs,
+                "classes": ["image-widget"],
             },
             props=props,
             style=style,
-            default_style={
-                "z-index": "13000",
-            },
         )
