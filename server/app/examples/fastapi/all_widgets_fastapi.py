@@ -470,27 +470,18 @@ def _build_initial_widgets(include_status_widget: bool = False) -> list[WasmWidg
 
 def create_app() -> FastAPI:
     application = FastAPI(title="PyWASMui all-widgets example")
-    pywasm_ui.fastapi.register_websocket_endpoint(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
-        path="/ws",
+        USER_WEB_ROOT,
+        ws_path="/ws",
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=_build_initial_widgets(
             include_status_widget=os.getenv("PYWASM_INCLUDE_STATUS_WIDGET") == "1"
         ),
-    )
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    pywasm_ui.fastapi.register_frontend_routes(
-        application,
-        USER_WEB_ROOT,
         pages={
             "/showcase": "index.html",
         },
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok"},
     )
     return application
 

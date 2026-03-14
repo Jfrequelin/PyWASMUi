@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, Response, jsonify
+from flask import Flask
 from flask_sock import Sock
 
 from pywasm_ui import (
@@ -81,25 +81,17 @@ def create_app() -> Flask:
     # Flask wiring: websocket endpoint via flask-sock + static/frontend routes.
     application = Flask(__name__)
     sock = Sock(application)
-    pywasm_ui.flask.register_websocket_endpoint(
+    pywasm_ui.flask.bootstrap_app(
+        application,
         sock,
-        path="/ws",
+        USER_WEB_ROOT,
+        ws_path="/ws",
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=_build_initial_widgets(),
-    )
-    pywasm_ui.flask.register_packaged_assets(application, route_prefix="/pywasm-assets")
-
-    @application.get("/health")
-    def health() -> tuple[Response, int]:
-        return jsonify({"status": "ok", "framework": "flask"}), 200
-
-    pywasm_ui.flask.register_frontend_routes(
-        application,
-        USER_WEB_ROOT,
         pages={
             "/playground": "index.html",
         },
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok", "framework": "flask"},
     )
     return application
 

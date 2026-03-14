@@ -2,6 +2,9 @@
 
 ## Main Entry Points
 
+- `bootstrap_fastapi_app(app, client_root, ...)`
+- `bootstrap_flask_app(app, sock, client_root, ...)`
+- adapters: `pywasm_ui.fastapi.bootstrap_app(...)`, `pywasm_ui.flask.bootstrap_app(...)`
 - `mount_fastapi_websocket(app, ...)`
 - `mount_fastapi_frontend(app, ...)`
 - `mount_fastapi_socket(app, ...)` (compatibility alias)
@@ -48,7 +51,14 @@
 
 ```python
 from fastapi import FastAPI
-from pywasm_ui import ButtonWidget, EventPayload, LabelWidget, PyWasmSession, mount_fastapi_websocket
+from pathlib import Path
+from pywasm_ui import (
+    ButtonWidget,
+    EventPayload,
+    LabelWidget,
+    PyWasmSession,
+    bootstrap_fastapi_app,
+)
 
 app = FastAPI()
 
@@ -60,15 +70,18 @@ def on_click(session: PyWasmSession, event: EventPayload):
 def configure(session: PyWasmSession):
     session.register_event_handler("click", "btn1", on_click)
 
-mount_fastapi_websocket(
+bootstrap_fastapi_app(
     app,
-    path="/ws",
+    Path("web"),
+    ws_path="/ws",
     server_secret="change-me",
     initial_widgets=[
         LabelWidget(id="label1", parent="root", text="Ready"),
         ButtonWidget(id="btn1", parent="root", text="Click me"),
     ],
     configure_session=configure,
+    pages={"/": "index.html"},
+    health_payload={"status": "ok"},
 )
 ```
 
@@ -157,15 +170,16 @@ Recommended distribution pattern:
 
 ```python
 from pathlib import Path
-from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
+from pywasm_ui import bootstrap_fastapi_app
 
-mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
-
-mount_fastapi_frontend(
+bootstrap_fastapi_app(
     app,
     Path("web"),
+    ws_path="/ws",
+    server_secret="change-me",
     pages={"/": "index.html"},
-    reserved_paths=("ws", "health", "pywasm-assets"),
+    assets_route_prefix="/pywasm-assets",
+    health_path="/health",
 )
 ```
 
@@ -200,17 +214,18 @@ If `ws_host` or `ws_port` is `None`, the client falls back to the current page h
 from flask import Flask
 from flask_sock import Sock
 from pathlib import Path
-from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
+from pywasm_ui import bootstrap_flask_app
 
 app = Flask(__name__)
 sock = Sock(app)
-register_flask_socket(sock, path="/ws", server_secret="change-me")
-register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
-register_flask_frontend(
+bootstrap_flask_app(
     app,
+    sock,
     Path("web"),
+    ws_path="/ws",
+    server_secret="change-me",
     pages={"/": "index.html"},
-    reserved_paths=("ws", "health", "pywasm-assets"),
+    health_payload={"status": "ok", "framework": "flask"},
 )
 ```
 

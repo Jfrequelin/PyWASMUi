@@ -83,8 +83,31 @@ curl -sS http://127.0.0.1:8000 | head -n 5
 
 ## Integration simplifiee (pages multiples)
 
-Vous pouvez eviter de recoder les routes frontend (`/`, assets, fallback SPA)
-en utilisant le helper de la lib :
+Vous pouvez eviter de recoder les routes frontend (`/`, assets, fallback SPA),
+le websocket et la route health avec un seul helper :
+
+```python
+from pathlib import Path
+from pywasm_ui import bootstrap_fastapi_app
+
+bootstrap_fastapi_app(
+	app,
+	Path("web"),
+	ws_path="/ws",
+	server_secret="change-me",
+	initial_widgets=[...],
+	pages={
+		"/": "index.html",
+		"/dashboard": "pages/dashboard.html",
+		"/settings": "pages/settings.html",
+	},
+	assets_route_prefix="/pywasm-assets",
+	health_path="/health",
+	health_payload={"status": "ok"},
+)
+```
+
+Si vous voulez garder le controle fin, vous pouvez appeler les helpers separement :
 
 ```python
 from pathlib import Path

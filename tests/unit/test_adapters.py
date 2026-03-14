@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from pywasm_ui.adapters import (
     _apply_security_headers,
     _extract_flask_requested_token,
     _is_origin_allowed,
+    bootstrap_fastapi_app,
 )
 from pywasm_ui.frontend_assets import get_packaged_frontend_root
+from pywasm_ui.widgets import ButtonWidget, LabelWidget
 
 
 class _FakeWs:
@@ -51,3 +59,36 @@ def test_apply_security_headers_adds_defaults_once() -> None:
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+
+
+def test_bootstrap_fastapi_app_wires_routes_assets_and_websocket(tmp_path: Path) -> None:
+    web_root = tmp_path / "web"
+    web_root.mkdir(parents=True)
+    (web_root / "index.html").write_text("<html><body>home</body></html>", encoding="utf-8")
+
+    app = FastAPI()
+    bootstrap_fastapi_app(
+        app,
+        web_root,
+        server_secret="test-secret",
+        initial_widgets=[
+            LabelWidget(id="label1", parent="root", text="0"),
+            ButtonWidget(id="btn1", parent="root", text="+1"),
+        ],
+    )
+    client = TestClient(app)
+
+    health = client.get("/health")
+    assert health.status_code == 200
+    assert health.json() == {"status": "ok"}
+
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "home" in home.text
+
+    asset = client.get("/pywasm-assets/src/main.js")
+    assert asset.status_code == 200
+
+    with client.websocket_connect("/ws") as ws:
+        init = json.loads(ws.receive_text())
+        assert init["type"] == "init"

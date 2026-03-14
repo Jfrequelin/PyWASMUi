@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-14] - Simplified API Rollout in Docs and Examples
+
+### Added
+- Added one-call app bootstrap helpers in adapter layer:
+  - `bootstrap_fastapi_app(...)`
+  - `bootstrap_flask_app(...)`
+- Added adapter facade shortcuts:
+  - `pywasm_ui.fastapi.bootstrap_app(...)`
+  - `pywasm_ui.flask.bootstrap_app(...)`
+- Added public exports for simplified helpers in `python_lib/pywasm_ui/__init__.py`.
+
+### Changed
+- Migrated FastAPI and Flask main examples to simplified bootstrap wiring:
+  - `server/app/examples/fastapi/fastapi_server.py`
+  - `server/app/examples/flask/flask_server.py`
+- Migrated FastAPI tutorial/showcase examples from 3-step wiring to one-call bootstrap:
+  - `server/app/examples/fastapi/01_single_widget_fastapi.py`
+  - `server/app/examples/fastapi/02_widget_composition_fastapi.py`
+  - `server/app/examples/fastapi/03_style_updates_fastapi.py`
+  - `server/app/examples/fastapi/05_form_controls_fastapi.py`
+  - `server/app/examples/fastapi/10_widgets_catalog_fastapi.py`
+  - `server/app/examples/fastapi/all_widgets_fastapi.py`
+- Updated documentation to make simplified bootstrap integration the recommended path while keeping low-level helpers documented:
+  - `README.md`
+  - `python_lib/README.md`
+  - `doc/en/getting-started.md`
+  - `doc/fr/getting-started.md`
+  - `doc/en/python-api.md`
+  - `doc/fr/python-api.md`
+
+### Tests
+- Extended adapter coverage with a dedicated simplified bootstrap test in `tests/unit/test_adapters.py`.
+
 ## [2026-03-13] - Open Source Readiness Pack
 
 ### Added

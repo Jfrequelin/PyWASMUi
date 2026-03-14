@@ -151,25 +151,16 @@ def _build_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
-    # Standard runtime registration for websocket + assets + frontend page.
+    # Standard runtime registration in one helper call.
     application = FastAPI(title="PyWASMui form-controls example")
-    pywasm_ui.fastapi.register_websocket_endpoint(
-        application,
-        path="/ws",
-        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
-        initial_widgets=_build_widgets(),
-    )
-
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-    pywasm_ui.fastapi.register_frontend_routes(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
         WEB_ROOT,
+        ws_path="/ws",
+        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
+        initial_widgets=_build_widgets(),
         pages={"/": "index.html"},
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok"},
     )
     return application
 

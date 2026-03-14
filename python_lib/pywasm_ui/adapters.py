@@ -4,7 +4,7 @@ import asyncio
 import os
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence, cast
 from urllib.parse import parse_qs
 
 from .communication import (
@@ -205,6 +205,40 @@ def _normalize_route_prefix(route_prefix: str) -> str:
     return value
 
 
+def _first_path_segment(path_value: str) -> str | None:
+    value = path_value.strip()
+    if not value:
+        return None
+    if value.startswith("/"):
+        value = value[1:]
+    if not value:
+        return None
+    return value.split("/", 1)[0]
+
+
+def _merge_reserved_paths(
+    reserved_paths: Sequence[str],
+    *,
+    ws_path: str,
+    health_path: str | None,
+    assets_route_prefix: str,
+) -> tuple[str, ...]:
+    merged: list[str] = []
+    for value in reserved_paths:
+        cleaned = value.strip("/")
+        if cleaned and cleaned not in merged:
+            merged.append(cleaned)
+
+    for source in (ws_path, health_path, assets_route_prefix):
+        if source is None:
+            continue
+        segment = _first_path_segment(source)
+        if segment and segment not in merged:
+            merged.append(segment)
+
+    return tuple(merged)
+
+
 def mount_fastapi_frontend(
     app: object,
     client_root: str | Path,
@@ -395,6 +429,66 @@ def mount_fastapi_packaged_assets(app: object, *, route_prefix: str = "/pywasm-a
     return root
 
 
+def bootstrap_fastapi_app(
+    app: object,
+    client_root: str | Path,
+    *,
+    ws_path: str = "/ws",
+    server_secret: str = "dev-server-secret-change-me",
+    session_factory: Callable[[], PyWasmSession] | None = None,
+    initial_widgets: Sequence[WasmWidget] | None = None,
+    configure_session: Callable[[PyWasmSession], None] | None = None,
+    style_template: dict[str, Any] | "StyleTemplate" | None = None,
+    assets_route_prefix: str = "/pywasm-assets",
+    index_file: str = "index.html",
+    pages: dict[str, str] | None = None,
+    reserved_paths: Sequence[str] = (),
+    spa_fallback: bool = True,
+    health_path: str | None = "/health",
+    health_payload: Mapping[str, Any] | None = None,
+) -> None:
+    """Wire a FastAPI app with a PyWASMui websocket and frontend routes.
+
+    This helper is intended for quick integration and small multipage apps.
+    """
+
+    mount_fastapi_websocket(
+        app,
+        path=ws_path,
+        server_secret=server_secret,
+        session_factory=session_factory,
+        initial_widgets=initial_widgets,
+        configure_session=configure_session,
+        style_template=style_template,
+    )
+
+    mount_fastapi_packaged_assets(app, route_prefix=assets_route_prefix)
+
+    normalized_health_path: str | None = None
+    if health_path:
+        normalized_health_path = _normalize_page_route(health_path)
+        payload = dict(health_payload or {"status": "ok"})
+
+        @app.get(normalized_health_path)  # type: ignore[attr-defined]
+        async def _pywasm_health() -> dict[str, Any]:
+            return payload
+
+    frontend_reserved_paths = _merge_reserved_paths(
+        reserved_paths,
+        ws_path=ws_path,
+        health_path=normalized_health_path,
+        assets_route_prefix=assets_route_prefix,
+    )
+    mount_fastapi_frontend(
+        app,
+        client_root,
+        index_file=index_file,
+        pages=pages,
+        reserved_paths=frontend_reserved_paths,
+        spa_fallback=spa_fallback,
+    )
+
+
 def register_flask_packaged_assets(app: object, *, route_prefix: str = "/pywasm-assets") -> Path:
     """Expose packaged PyWASMui frontend assets under a Flask route prefix."""
 
@@ -420,6 +514,67 @@ def register_flask_packaged_assets(app: object, *, route_prefix: str = "/pywasm-
     _packaged_asset.__name__ = f"_packaged_asset_{endpoint_suffix}"
     _packaged_asset_root.__name__ = f"_packaged_asset_root_{endpoint_suffix}"
     return root
+
+
+def bootstrap_flask_app(
+    app: object,
+    sock: object,
+    client_root: str | Path,
+    *,
+    ws_path: str = "/ws",
+    server_secret: str = "dev-server-secret-change-me",
+    session_factory: Callable[[], PyWasmSession] | None = None,
+    initial_widgets: Sequence[WasmWidget] | None = None,
+    configure_session: Callable[[PyWasmSession], None] | None = None,
+    style_template: dict[str, Any] | "StyleTemplate" | None = None,
+    assets_route_prefix: str = "/pywasm-assets",
+    index_file: str = "index.html",
+    pages: dict[str, str] | None = None,
+    reserved_paths: Sequence[str] = (),
+    spa_fallback: bool = True,
+    health_path: str | None = "/health",
+    health_payload: Mapping[str, Any] | None = None,
+) -> None:
+    """Wire a Flask app with a PyWASMui websocket and frontend routes."""
+
+    register_flask_socket(
+        sock,
+        path=ws_path,
+        server_secret=server_secret,
+        session_factory=session_factory,
+        initial_widgets=initial_widgets,
+        configure_session=configure_session,
+        style_template=style_template,
+    )
+
+    register_flask_packaged_assets(app, route_prefix=assets_route_prefix)
+
+    normalized_health_path: str | None = None
+    if health_path:
+        normalized_health_path = _normalize_page_route(health_path)
+        payload = dict(health_payload or {"status": "ok"})
+
+        @app.get(normalized_health_path)  # type: ignore[attr-defined]
+        def _pywasm_health() -> object:
+            if jsonify is not None:
+                jsonify_fn = cast(Callable[..., object], jsonify)
+                return jsonify_fn(payload), 200
+            return payload, 200
+
+    frontend_reserved_paths = _merge_reserved_paths(
+        reserved_paths,
+        ws_path=ws_path,
+        health_path=normalized_health_path,
+        assets_route_prefix=assets_route_prefix,
+    )
+    register_flask_frontend(
+        app,
+        client_root,
+        index_file=index_file,
+        pages=pages,
+        reserved_paths=frontend_reserved_paths,
+        spa_fallback=spa_fallback,
+    )
 
 
 class FastAPIAdapter:
@@ -535,6 +690,43 @@ class FastAPIAdapter:
             style_template=style_template,
         )
 
+    def bootstrap_app(
+        self,
+        app: object,
+        client_root: str | Path,
+        *,
+        ws_path: str = "/ws",
+        server_secret: str = "dev-server-secret-change-me",
+        session_factory: Callable[[], PyWasmSession] | None = None,
+        initial_widgets: Sequence[WasmWidget] | None = None,
+        configure_session: Callable[[PyWasmSession], None] | None = None,
+        style_template: dict[str, Any] | "StyleTemplate" | None = None,
+        assets_route_prefix: str = "/pywasm-assets",
+        index_file: str = "index.html",
+        pages: dict[str, str] | None = None,
+        reserved_paths: Sequence[str] = (),
+        spa_fallback: bool = True,
+        health_path: str | None = "/health",
+        health_payload: Mapping[str, Any] | None = None,
+    ) -> None:
+        bootstrap_fastapi_app(
+            app,
+            client_root,
+            ws_path=ws_path,
+            server_secret=server_secret,
+            session_factory=session_factory,
+            initial_widgets=initial_widgets,
+            configure_session=configure_session,
+            style_template=style_template,
+            assets_route_prefix=assets_route_prefix,
+            index_file=index_file,
+            pages=pages,
+            reserved_paths=reserved_paths,
+            spa_fallback=spa_fallback,
+            health_path=health_path,
+            health_payload=health_payload,
+        )
+
 
 class FlaskAdapter:
     """Object facade for Flask integration helpers."""
@@ -627,6 +819,45 @@ class FlaskAdapter:
             initial_widgets=initial_widgets,
             configure_session=configure_session,
             style_template=style_template,
+        )
+
+    def bootstrap_app(
+        self,
+        app: object,
+        sock: object,
+        client_root: str | Path,
+        *,
+        ws_path: str = "/ws",
+        server_secret: str = "dev-server-secret-change-me",
+        session_factory: Callable[[], PyWasmSession] | None = None,
+        initial_widgets: Sequence[WasmWidget] | None = None,
+        configure_session: Callable[[PyWasmSession], None] | None = None,
+        style_template: dict[str, Any] | "StyleTemplate" | None = None,
+        assets_route_prefix: str = "/pywasm-assets",
+        index_file: str = "index.html",
+        pages: dict[str, str] | None = None,
+        reserved_paths: Sequence[str] = (),
+        spa_fallback: bool = True,
+        health_path: str | None = "/health",
+        health_payload: Mapping[str, Any] | None = None,
+    ) -> None:
+        bootstrap_flask_app(
+            app,
+            sock,
+            client_root,
+            ws_path=ws_path,
+            server_secret=server_secret,
+            session_factory=session_factory,
+            initial_widgets=initial_widgets,
+            configure_session=configure_session,
+            style_template=style_template,
+            assets_route_prefix=assets_route_prefix,
+            index_file=index_file,
+            pages=pages,
+            reserved_paths=reserved_paths,
+            spa_fallback=spa_fallback,
+            health_path=health_path,
+            health_payload=health_payload,
         )
 
 

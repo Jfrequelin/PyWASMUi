@@ -26,31 +26,20 @@ def _on_add_widget(session: PyWasmSession) -> list[CallbackResponse]:
 
 
 def create_app() -> FastAPI:
-    # Register websocket endpoint with initial UI state and event wiring.
+    # Register websocket, assets, frontend routes, and health in one helper.
     application = FastAPI(title="PyWASMui example 01 - single widget")
-    pywasm_ui.fastapi.register_websocket_endpoint(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
-        path="/ws",
+        WEB_ROOT,
+        ws_path="/ws",
         server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
         initial_widgets=[
             LabelWidget(id="hello_label", parent="root", text="Hello from PyWASMui"),
             ButtonWidget(id="add_widget_btn", parent="root", text="Add dynamic widget"),
         ],
         configure_session=lambda session: session.on_click("add_widget_btn", _on_add_widget),
-    )
-
-    # Health route used by integration tests and local troubleshooting.
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok", "example": "01_single_widget"}
-
-    # Serve packaged runtime and mount the example HTML page.
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-    pywasm_ui.fastapi.register_frontend_routes(
-        application,
-        WEB_ROOT,
         pages={"/": "index.html"},
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok", "example": "01_single_widget"},
     )
     return application
 

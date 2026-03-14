@@ -580,23 +580,14 @@ def create_app(include_status_widget: bool = False) -> FastAPI:
     if include_status_widget:
         initial_widgets.insert(0, ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"))
 
-    pywasm_ui.fastapi.register_websocket_endpoint(
-        application,
-        path="/ws",
-        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
-        initial_widgets=initial_widgets,
-    )
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok", "example": "10_widgets_catalog"}
-
-    pywasm_ui.fastapi.register_frontend_routes(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
         WEB_ROOT,
+        ws_path="/ws",
+        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
+        initial_widgets=initial_widgets,
         pages={"/": "index.html", "/catalog": "index.html"},
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok", "example": "10_widgets_catalog"},
     )
     return application
 

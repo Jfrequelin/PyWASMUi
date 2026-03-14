@@ -94,9 +94,7 @@ from fastapi import FastAPI
 from pathlib import Path
 
 from pywasm_ui import (
-	mount_fastapi_frontend,
-	mount_fastapi_packaged_assets,
-	mount_fastapi_websocket,
+	bootstrap_fastapi_app,
 	ButtonWidget,
 	EventPayload,
 	LabelWidget,
@@ -113,28 +111,22 @@ def on_click(session: PyWasmSession, event: EventPayload):
 def configure(session: PyWasmSession):
 	session.register_event_handler("click", "btn1", on_click)
 
-mount_fastapi_websocket(
+bootstrap_fastapi_app(
 	app,
-	path="/ws",
+	Path("web"),
+	ws_path="/ws",
 	server_secret="change-me",
 	initial_widgets=[
 		LabelWidget(id="label1", parent="root", text="Ready"),
 		ButtonWidget(id="btn1", parent="root", text="Click"),
 	],
 	configure_session=configure,
-)
-
-mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
-
-mount_fastapi_frontend(
-	app,
-	Path("web"),
 	pages={
 		"/": "index.html",
 		"/dashboard": "pages/dashboard.html",
 		"/admin": "pages/admin.html",
 	},
-	reserved_paths=("ws", "health", "pywasm-assets"),
+	health_payload={"status": "ok"},
 )
 ```
 
@@ -144,17 +136,18 @@ from pathlib import Path
 
 from flask import Flask
 from flask_sock import Sock
-from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
+from pywasm_ui import bootstrap_flask_app
 
 app = Flask(__name__)
 sock = Sock(app)
-register_flask_socket(sock, path="/ws", server_secret="change-me")
-register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
-register_flask_frontend(
+bootstrap_flask_app(
 	app,
+	sock,
 	Path("web"),
+	ws_path="/ws",
+	server_secret="change-me",
 	pages={"/admin": "pages/admin.html"},
-	reserved_paths=("ws", "health", "pywasm-assets"),
+	health_payload={"status": "ok", "framework": "flask"},
 )
 ```
 

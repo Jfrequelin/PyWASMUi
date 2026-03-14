@@ -75,26 +75,33 @@ curl -sS http://127.0.0.1:8000 | head -n 5
 
 ## Simplified Integration (multi-page)
 
-To avoid rewriting frontend routes (`/`, assets, SPA fallback), use the
-library helper:
+To avoid rewriting frontend routes (`/`, assets, SPA fallback), websocket wiring,
+and a health route, use a single helper:
 
 ```python
 from pathlib import Path
-from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
+from pywasm_ui import bootstrap_fastapi_app
 
-mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
-
-mount_fastapi_frontend(
+bootstrap_fastapi_app(
 	app,
 	Path("web"),
+	ws_path="/ws",
+	server_secret="change-me",
+	initial_widgets=[...],
 	pages={
 		"/": "index.html",
 		"/dashboard": "pages/dashboard.html",
 		"/settings": "pages/settings.html",
 	},
-	reserved_paths=("ws", "health", "pywasm-assets"),
+	assets_route_prefix="/pywasm-assets",
+	health_path="/health",
+	health_payload={"status": "ok"},
 )
 ```
+
+If you need lower-level control, you can still call
+`mount_fastapi_websocket(...)`, `mount_fastapi_packaged_assets(...)`, and
+`mount_fastapi_frontend(...)` separately.
 
 ## Jinja2 Integration (keep your existing pages)
 

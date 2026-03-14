@@ -72,7 +72,8 @@ poetry publish
 
 ```python
 from fastapi import FastAPI
-from pywasm_ui import EventPayload, PyWasmSession, Widget, mount_fastapi_websocket
+from pathlib import Path
+from pywasm_ui import EventPayload, PyWasmSession, Widget, bootstrap_fastapi_app
 
 app = FastAPI()
 
@@ -84,27 +85,18 @@ def on_click(session: PyWasmSession, event: EventPayload):
 def configure(session: PyWasmSession):
 	session.register_event_handler("click", "btn1", on_click)
 
-mount_fastapi_websocket(
+bootstrap_fastapi_app(
 	app,
-	path="/ws",
+	Path("web"),
+	ws_path="/ws",
 	server_secret="change-me",
 	initial_widgets=[
 		Widget(id="label1", kind="Label", parent="root", props={"text": "Ready"}),
 		Widget(id="btn1", kind="Button", parent="root", props={"text": "Click"}),
 	],
 	configure_session=configure,
-)
-
-# assets PyWASMui servis depuis la lib
-from pathlib import Path
-from pywasm_ui import mount_fastapi_frontend, mount_fastapi_packaged_assets
-
-mount_fastapi_packaged_assets(app, route_prefix="/pywasm-assets")
-mount_fastapi_frontend(
-	app,
-	Path("web"),
 	pages={"/": "index.html"},
-	reserved_paths=("ws", "health", "pywasm-assets"),
+	health_payload={"status": "ok"},
 )
 ```
 
@@ -114,17 +106,18 @@ mount_fastapi_frontend(
 from flask import Flask
 from flask_sock import Sock
 from pathlib import Path
-from pywasm_ui import register_flask_frontend, register_flask_packaged_assets, register_flask_socket
+from pywasm_ui import bootstrap_flask_app
 
 app = Flask(__name__)
 sock = Sock(app)
-register_flask_socket(sock, path="/ws", server_secret="change-me")
-register_flask_packaged_assets(app, route_prefix="/pywasm-assets")
-register_flask_frontend(
+bootstrap_flask_app(
 	app,
+	sock,
 	Path("web"),
+	ws_path="/ws",
+	server_secret="change-me",
 	pages={"/": "index.html"},
-	reserved_paths=("ws", "health", "pywasm-assets"),
+	health_payload={"status": "ok", "framework": "flask"},
 )
 ```
 

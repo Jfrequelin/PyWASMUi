@@ -44,25 +44,16 @@ def _build_widgets() -> list[WasmWidget]:
 
 
 def create_app() -> FastAPI:
-    # App bootstrapping: websocket, health probe, assets, then frontend route.
+    # App bootstrapping: one helper wires websocket/assets/frontend/health.
     application = FastAPI(title="PyWASMui example 02 - composition")
-    pywasm_ui.fastapi.register_websocket_endpoint(
-        application,
-        path="/ws",
-        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
-        initial_widgets=_build_widgets(),
-    )
-
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok", "example": "02_widget_composition"}
-
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-    pywasm_ui.fastapi.register_frontend_routes(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
         WEB_ROOT,
+        ws_path="/ws",
+        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
+        initial_widgets=_build_widgets(),
         pages={"/": "index.html"},
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok", "example": "02_widget_composition"},
     )
     return application
 

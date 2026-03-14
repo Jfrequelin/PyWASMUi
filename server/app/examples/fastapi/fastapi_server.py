@@ -81,25 +81,16 @@ def _build_initial_widgets() -> list[WasmWidget]:
 def create_app() -> FastAPI:
     # Basic app used as the default FastAPI playground endpoint.
     application = FastAPI(title="PyWASMui server")
-    pywasm_ui.fastapi.register_websocket_endpoint(
-        application,
-        path="/ws",
-        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
-        initial_widgets=_build_initial_widgets(),
-    )
-    pywasm_ui.fastapi.register_packaged_assets(application, route_prefix="/pywasm-assets")
-
-    @application.get("/health")
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    pywasm_ui.fastapi.register_frontend_routes(
+    pywasm_ui.fastapi.bootstrap_app(
         application,
         USER_WEB_ROOT,
+        ws_path="/ws",
+        server_secret=os.getenv("PYWASM_SERVER_SECRET", "dev-server-secret-change-me"),
+        initial_widgets=_build_initial_widgets(),
         pages={
             "/playground": "index.html",
         },
-        reserved_paths=("ws", "health", "pywasm-assets"),
+        health_payload={"status": "ok"},
     )
     return application
 
