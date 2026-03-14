@@ -42,6 +42,8 @@ from pywasm_ui.session.types import CallbackResponse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 WEB_ROOT = PROJECT_ROOT / "server" / "app" / "examples" / "web"
+THEMES_ROOT = WEB_ROOT / "themes"
+DEFAULT_THEME = "modern"
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
@@ -51,6 +53,37 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return int(str(value))
     except (TypeError, ValueError):
         return default
+
+
+def _discover_theme_names() -> list[str]:
+    preferred_order = ["modern", "slate", "sunset", "ladys", "neo-ember"]
+    discovered = {
+        path.stem
+        for path in THEMES_ROOT.glob("*.css")
+        if path.is_file() and path.stem != "base"
+    }
+    ordered = [name for name in preferred_order if name in discovered]
+    extras = sorted(name for name in discovered if name not in preferred_order)
+    names = ordered + extras
+    return names or [DEFAULT_THEME]
+
+
+def _theme_label(theme_name: str) -> str:
+    return theme_name.replace("-", " ").title()
+
+
+def _build_theme_options(theme_names: list[str]) -> list[OptionWidget]:
+    active = DEFAULT_THEME if DEFAULT_THEME in theme_names else theme_names[0]
+    return [
+        OptionWidget(
+            id=f"theme_option_{name.replace('-', '_')}",
+            parent="theme_select",
+            text=_theme_label(name),
+            value=name,
+            selected=name == active,
+        )
+        for name in theme_names
+    ]
 
 
 @dataclass
@@ -391,7 +424,7 @@ def _build_showcase_header(widgets: InteractiveWidgets) -> list[WasmWidget]:
     ]
 
 
-def _build_interaction_section(widgets: InteractiveWidgets) -> list[WasmWidget]:
+def _build_interaction_section(widgets: InteractiveWidgets, theme_names: list[str]) -> list[WasmWidget]:
     return [
         widgets.name_input,
         ParagraphWidget(id="paragraph_name", parent="stack_interactions", text="Apercu du nom saisi:"),
@@ -414,23 +447,12 @@ def _build_interaction_section(widgets: InteractiveWidgets) -> list[WasmWidget]:
         OptionWidget(id="category_beta", parent="category_select", text="Beta", value="beta"),
         LabelWidget(id="select_value", parent="stack_interactions", text="Categorie modifiee: 0 fois"),
         widgets.theme_select,
-        OptionWidget(
-            id="theme_option_modern",
-            parent="theme_select",
-            text="Modern",
-            value="modern",
-            selected=True,
+        *_build_theme_options(theme_names),
+        LabelWidget(
+            id="theme_value",
+            parent="stack_interactions",
+            text=f"Theme actif: {DEFAULT_THEME if DEFAULT_THEME in theme_names else theme_names[0]}",
         ),
-        OptionWidget(id="theme_option_slate", parent="theme_select", text="Slate", value="slate"),
-        OptionWidget(id="theme_option_sunset", parent="theme_select", text="Sunset", value="sunset"),
-        OptionWidget(id="theme_option_ladys", parent="theme_select", text="Ladys", value="ladys"),
-        OptionWidget(
-            id="theme_option_neo_ember",
-            parent="theme_select",
-            text="Neo Ember",
-            value="neo-ember",
-        ),
-        LabelWidget(id="theme_value", parent="stack_interactions", text="Theme actif: modern"),
         ProgressWidget(id="task_progress", parent="stack_interactions", value=25, max_value=100),
         widgets.progress_btn,
         LabelWidget(
@@ -521,7 +543,7 @@ def _build_dynamic_table_section(widgets: InteractiveWidgets) -> list[WasmWidget
 
 
 # Step 3: assemble full initial widget tree.
-def _build_initial_widgets() -> list[WasmWidget]:
+def _build_initial_widgets(theme_names: list[str]) -> list[WasmWidget]:
     widgets = _build_interactive_widgets()
     return [
         WindowWidget(
@@ -565,7 +587,7 @@ def _build_initial_widgets() -> list[WasmWidget]:
         ),
         StackWidget(id="stack_table", parent="card_table", gap="10px"),
         *_build_showcase_header(widgets),
-        *_build_interaction_section(widgets),
+        *_build_interaction_section(widgets, theme_names),
         *_build_features_section(),
         *_build_dynamic_table_section(widgets),
     ]
@@ -575,7 +597,7 @@ def _build_initial_widgets() -> list[WasmWidget]:
 # Step 4: create the FastAPI app and register websocket + frontend routes.
 def create_app(include_status_widget: bool = False) -> FastAPI:
     application = FastAPI(title="PyWASMui example 10 - widget catalog")
-    initial_widgets = _build_initial_widgets()
+    initial_widgets = _build_initial_widgets(_discover_theme_names())
     # Optional status widget: disabled by default to keep the template minimal.
     if include_status_widget:
         initial_widgets.insert(0, ConnectionStatusWidget(id="conn_status", parent="root", state="connecting"))

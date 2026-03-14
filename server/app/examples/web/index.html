@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyWASMui Examples</title>
-    <link rel="stylesheet" href="/theme-modern.css?v=20260313b" />
+    <link rel="stylesheet" href="/themes/base.css?v=20260314a" />
   </head>
   <body>
     <main class="app-shell">
@@ -15,9 +15,28 @@
     <script>
       const THEME_STORAGE_KEY = "pywasm.theme";
       const DEFAULT_THEME = "modern";
+      const THEME_QUERY_SUFFIX = "v=20260314a";
+
+      function ensureThemeStylesheet(themeName) {
+        const safeTheme = String(themeName || DEFAULT_THEME).trim() || DEFAULT_THEME;
+        const href = `/themes/${encodeURIComponent(safeTheme)}.css?${THEME_QUERY_SUFFIX}`;
+
+        let link = document.getElementById("dynamic-theme-stylesheet");
+        if (!(link instanceof HTMLLinkElement)) {
+          link = document.createElement("link");
+          link.id = "dynamic-theme-stylesheet";
+          link.rel = "stylesheet";
+          document.head.appendChild(link);
+        }
+
+        if (link.href !== new URL(href, window.location.origin).href) {
+          link.href = href;
+        }
+      }
 
       function applyTheme(themeName) {
         const nextTheme = typeof themeName === "string" && themeName ? themeName : DEFAULT_THEME;
+        ensureThemeStylesheet(nextTheme);
         document.documentElement.setAttribute("data-theme", nextTheme);
         try {
           localStorage.setItem(THEME_STORAGE_KEY, nextTheme);

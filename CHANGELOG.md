@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-14] - Automatic Theme Loading for Example 10
+
+### Added
+- Added automatic theme discovery in `server/app/examples/fastapi/10_widgets_catalog_fastapi.py` by scanning `server/app/examples/web/themes/*.css` (excluding `base.css`) and generating `theme_select` options dynamically.
+- Added dynamic stylesheet loading in `server/app/examples/web/index.html` so the active theme CSS is loaded from `/themes/<theme>.css` at runtime.
+
+### Changed
+- Updated example 10 theme options to no longer rely on a hard-coded list in Python.
+- Updated the page stylesheet bootstrap to load `base.css` directly and resolve the selected theme through a dedicated dynamic `<link>` element.
+
 ## [2026-03-14] - Simplified API Rollout in Docs and Examples
 
 ### Added
