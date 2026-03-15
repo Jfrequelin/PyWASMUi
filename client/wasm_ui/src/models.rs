@@ -33,6 +33,8 @@ pub(crate) struct InitPayload {
     pub(crate) r#type: String,
     pub(crate) session: SessionRef,
     pub(crate) client_secret: String,
+    #[serde(default)]
+    pub(crate) meta: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]

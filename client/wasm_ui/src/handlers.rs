@@ -1,11 +1,18 @@
 use crate::dom;
 use crate::models::{IncomingMessage, InitPayload};
 use crate::state;
+use serde_json::Value;
 
 pub(crate) fn handle_server_message(message: &str) {
     if let Ok(init) = serde_json::from_str::<InitPayload>(message) {
         if init.protocol == 1 && init.r#type == "init" {
-            state::set_session(init.session.token, init.client_secret);
+            let nonce_seed = init
+                .meta
+                .as_ref()
+                .and_then(|meta| meta.get("nonce_seed"))
+                .and_then(Value::as_u64)
+                .unwrap_or(0);
+            state::set_session(init.session.token, init.client_secret, nonce_seed);
         }
         return;
     }

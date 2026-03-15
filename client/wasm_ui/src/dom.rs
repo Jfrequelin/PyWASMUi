@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{
     window,
+    AddEventListenerOptions,
     Document,
     Element,
     Event,
@@ -15,6 +16,8 @@ use web_sys::{
 use crate::events::send_event;
 use crate::models::Widget;
 use crate::state;
+
+const SVG_NS: &str = "http://www.w3.org/2000/svg";
 
 pub(crate) fn ensure_root_widget() {
     let doc = match document() {
@@ -144,6 +147,8 @@ pub(crate) fn apply_update_patch(patch: Value) {
             let _ = el.remove_attribute(attr);
         }
     }
+
+    render_bar_chart_if_needed(&el);
 }
 
 pub(crate) fn remove_element(id: &str) {
@@ -166,7 +171,144 @@ fn create_widget_from_props(doc: &Document, widget: &Widget) -> Option<Element> 
     apply_common_attributes(&el, widget);
     apply_input_specific_attributes(&el, widget, tag);
     bind_server_declared_events(&el, widget, tag);
+    render_special_content(doc, &el, widget);
     Some(el)
+}
+
+fn render_special_content(doc: &Document, el: &Element, widget: &Widget) {
+    if widget.kind == "BarChart" || has_css_class(el, "bar-chart-widget") {
+        render_bar_chart(doc, el);
+    }
+}
+
+fn render_bar_chart_if_needed(el: &Element) {
+    if !has_css_class(el, "bar-chart-widget") {
+        return;
+    }
+    let Some(doc) = document() else {
+        return;
+    };
+    render_bar_chart(&doc, el);
+}
+
+fn render_bar_chart(doc: &Document, host: &Element) {
+    while let Some(child) = host.first_child() {
+        let _ = host.remove_child(&child);
+    }
+
+    let values = parse_number_array_attr(host, "data-chart-values");
+    if values.is_empty() {
+        host.set_text_content(Some("No chart data"));
+        return;
+    }
+
+    let labels = parse_string_array_attr(host, "data-chart-labels");
+    let width = parse_f64_attr(host, "data-chart-width").unwrap_or(360.0).max(120.0);
+    let height = parse_f64_attr(host, "data-chart-height").unwrap_or(180.0).max(120.0);
+    let computed_max = values.iter().copied().reduce(f64::max).unwrap_or(1.0).max(1.0);
+    let max_value = parse_f64_attr(host, "data-chart-max").unwrap_or(computed_max).max(1.0);
+
+    let Some(svg) = doc.create_element_ns(Some(SVG_NS), "svg").ok() else {
+        return;
+    };
+    let _ = svg.set_attribute("viewBox", &format!("0 0 {} {}", width, height));
+    let _ = svg.set_attribute("aria-hidden", "true");
+
+    let margin_left = 30.0;
+    let margin_right = 12.0;
+    let margin_top = 12.0;
+    let margin_bottom = 28.0;
+
+    let chart_w = (width - margin_left - margin_right).max(16.0);
+    let chart_h = (height - margin_top - margin_bottom).max(16.0);
+
+    if let Ok(axis) = doc.create_element_ns(Some(SVG_NS), "line") {
+        let _ = axis.set_attribute("x1", &margin_left.to_string());
+        let _ = axis.set_attribute("y1", &(margin_top + chart_h).to_string());
+        let _ = axis.set_attribute("x2", &(margin_left + chart_w).to_string());
+        let _ = axis.set_attribute("y2", &(margin_top + chart_h).to_string());
+        let _ = axis.set_attribute("stroke", "#94a3b8");
+        let _ = axis.set_attribute("stroke-width", "1");
+        let _ = svg.append_child(&axis);
+    }
+
+    let count = values.len() as f64;
+    let slot_w = chart_w / count;
+    let bar_w = (slot_w * 0.64).max(8.0);
+
+    for (idx, value) in values.iter().enumerate() {
+        let clamped = value.max(0.0);
+        let ratio = (clamped / max_value).min(1.0);
+        let bar_h = (ratio * chart_h).max(1.0);
+        let x = margin_left + (idx as f64 * slot_w) + ((slot_w - bar_w) / 2.0);
+        let y = margin_top + chart_h - bar_h;
+
+        if let Ok(rect) = doc.create_element_ns(Some(SVG_NS), "rect") {
+            let _ = rect.set_attribute("x", &format!("{:.2}", x));
+            let _ = rect.set_attribute("y", &format!("{:.2}", y));
+            let _ = rect.set_attribute("width", &format!("{:.2}", bar_w));
+            let _ = rect.set_attribute("height", &format!("{:.2}", bar_h));
+            let _ = rect.set_attribute("rx", "4");
+            let _ = rect.set_attribute("fill", "#0f766e");
+            let _ = svg.append_child(&rect);
+        }
+
+        if let Ok(text_value) = doc.create_element_ns(Some(SVG_NS), "text") {
+            let _ = text_value.set_attribute("x", &format!("{:.2}", x + (bar_w / 2.0)));
+            let _ = text_value.set_attribute("y", &format!("{:.2}", (y - 4.0).max(10.0)));
+            let _ = text_value.set_attribute("font-size", "10");
+            let _ = text_value.set_attribute("text-anchor", "middle");
+            let _ = text_value.set_attribute("fill", "#334155");
+            text_value.set_text_content(Some(&format!("{:.0}", clamped)));
+            let _ = svg.append_child(&text_value);
+        }
+
+        if let Some(label) = labels.get(idx) {
+            if let Ok(text_label) = doc.create_element_ns(Some(SVG_NS), "text") {
+                let _ = text_label.set_attribute("x", &format!("{:.2}", x + (bar_w / 2.0)));
+                let _ = text_label.set_attribute("y", &format!("{:.2}", margin_top + chart_h + 14.0));
+                let _ = text_label.set_attribute("font-size", "10");
+                let _ = text_label.set_attribute("text-anchor", "middle");
+                let _ = text_label.set_attribute("fill", "#64748b");
+                text_label.set_text_content(Some(label));
+                let _ = svg.append_child(&text_label);
+            }
+        }
+    }
+
+    let _ = host.append_child(&svg);
+}
+
+fn parse_number_array_attr(el: &Element, name: &str) -> Vec<f64> {
+    let Some(raw) = el.get_attribute(name) else {
+        return Vec::new();
+    };
+    let Ok(parsed) = serde_json::from_str::<Vec<Value>>(&raw) else {
+        return Vec::new();
+    };
+    parsed.iter().filter_map(Value::as_f64).collect()
+}
+
+fn parse_string_array_attr(el: &Element, name: &str) -> Vec<String> {
+    let Some(raw) = el.get_attribute(name) else {
+        return Vec::new();
+    };
+    let Ok(parsed) = serde_json::from_str::<Vec<String>>(&raw) else {
+        return Vec::new();
+    };
+    parsed
+}
+
+fn parse_f64_attr(el: &Element, name: &str) -> Option<f64> {
+    let raw = el.get_attribute(name)?;
+    raw.parse::<f64>().ok()
+}
+
+fn has_css_class(el: &Element, class_name: &str) -> bool {
+    let Some(classes) = el.get_attribute("class") else {
+        return false;
+    };
+    classes.split_whitespace().any(|name| name == class_name)
 }
 
 fn apply_common_attributes(el: &Element, widget: &Widget) {
@@ -287,9 +429,23 @@ fn bind_server_declared_events(el: &Element, widget: &Widget, tag: &str) {
             let value = event_value_for(&el_for_cb, &tag_name, &event_name_for_cb);
             send_event(&event_name_for_cb, &widget_id, value);
         });
-        let _ = el.add_event_listener_with_callback(&event_name, handler.as_ref().unchecked_ref());
+        if is_passive_scroll_event(&event_name) {
+            let options = AddEventListenerOptions::new();
+            options.set_passive(true);
+            let _ = el.add_event_listener_with_callback_and_add_event_listener_options(
+                &event_name,
+                handler.as_ref().unchecked_ref(),
+                &options,
+            );
+        } else {
+            let _ = el.add_event_listener_with_callback(&event_name, handler.as_ref().unchecked_ref());
+        }
         handler.forget();
     }
+}
+
+fn is_passive_scroll_event(event_name: &str) -> bool {
+    matches!(event_name, "wheel" | "touchstart" | "touchmove")
 }
 
 fn event_value_for(el: &Element, tag: &str, event_kind: &str) -> Option<String> {

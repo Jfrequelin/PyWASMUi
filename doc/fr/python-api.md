@@ -208,6 +208,50 @@ write_js_runtime_config(
 
 Laisser `ws_host` ou `ws_port` a `None` force le client a reutiliser l'hote/port de la page courante.
 
+Tu peux aussi passer des variables runtime partagees (serialisables en JSON) vers le JavaScript navigateur,
+utile pour des donnees de graphiques ou des schemas dynamiques:
+
+```python
+from pywasm_ui import write_js_runtime_config
+
+write_js_runtime_config(
+        "client/config/pywasm.runtime.json",
+        shared={
+                "chart": {
+                        "labels": ["Jan", "Fev", "Mar"],
+                        "values": [12, 18, 15],
+                },
+                "schema": {
+                        "kind": "flow",
+                        "nodes": [{"id": "A"}, {"id": "B"}],
+                },
+        },
+)
+```
+
+Au runtime, le frontend expose:
+
+- `window.__PYWASM_SHARED_VARS__`: objet courant des variables partagees.
+- `window.pywasmShared`: API helper (`get`, `set`, `merge`, `all`, `subscribe`).
+- Evenement `window` `pywasm:shared-update`: emis apres `set`/`merge`.
+
+Exemple en JS custom:
+
+```js
+const chart = window.pywasmShared.get('chart', { labels: [], values: [] });
+
+const unsubscribe = window.pywasmShared.subscribe(({ state }) => {
+    const nextChart = state.chart;
+    if (nextChart) {
+        renderChart(nextChart);
+    }
+});
+
+window.addEventListener('pywasm:shared-update', (event) => {
+    console.log('Variables partagees mises a jour:', event.detail);
+});
+```
+
 ## Integration Flask
 
 ```python

@@ -461,6 +461,7 @@ class PyWasmSession:
                 type="init",
                 session=SessionRef(token=self._state.security.session_token),
                 client_secret=self._state.security.client_secret,
+                meta={"nonce_seed": self._state.security.last_nonce},
             ).model_dump_json(exclude_none=True)
         )
 

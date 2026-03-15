@@ -2,6 +2,8 @@ from .AccordionHeaderWidget import AccordionHeaderWidget
 from .AccordionItemWidget import AccordionItemWidget
 from .AccordionWidget import AccordionWidget
 from .AlertWidget import AlertWidget
+from .AudioWidget import AudioWidget
+from .BarChartWidget import BarChartWidget
 from .BadgeWidget import BadgeWidget
 from .ButtonWidget import ButtonWidget
 from .CardWidget import CardWidget
@@ -22,12 +24,14 @@ from .ProgressWidget import ProgressWidget
 from .RowWidget import RowWidget
 from .SelectWidget import SelectWidget
 from .SliderWidget import SliderWidget
+from .SpinnerWidget import SpinnerWidget
 from .StackWidget import StackWidget
 from .CodeBlockWidget import CodeBlockWidget
 from .TabItemWidget import TabItemWidget
 from .TabsWidget import TabsWidget
 from .TextAreaWidget import TextAreaWidget
 from .TextInputWidget import TextInputWidget
+from .VideoWidget import VideoWidget
 from .WindowWidget import WindowWidget
 
 __all__ = [
@@ -35,6 +39,8 @@ __all__ = [
     "AccordionItemWidget",
     "AccordionHeaderWidget",
     "AlertWidget",
+    "AudioWidget",
+    "BarChartWidget",
     "BadgeWidget",
     "CardWidget",
     "CheckboxWidget",
@@ -56,10 +62,12 @@ __all__ = [
     "RowWidget",
     "SelectWidget",
     "SliderWidget",
+    "SpinnerWidget",
     "StackWidget",
     "TabsWidget",
     "TabItemWidget",
     "TextAreaWidget",
     "TextInputWidget",
+    "VideoWidget",
     "ListViewWidget",
 ]

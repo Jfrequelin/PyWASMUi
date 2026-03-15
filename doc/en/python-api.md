@@ -208,6 +208,50 @@ write_js_runtime_config(
 
 If `ws_host` or `ws_port` is `None`, the client falls back to the current page host/port.
 
+You can also pass shared runtime variables (JSON-serializable) to browser JavaScript,
+which is useful for chart data or dynamic schemas:
+
+```python
+from pywasm_ui import write_js_runtime_config
+
+write_js_runtime_config(
+        "client/config/pywasm.runtime.json",
+        shared={
+                "chart": {
+                        "labels": ["Jan", "Feb", "Mar"],
+                        "values": [12, 18, 15],
+                },
+                "schema": {
+                        "kind": "flow",
+                        "nodes": [{"id": "A"}, {"id": "B"}],
+                },
+        },
+)
+```
+
+At runtime, the frontend exposes:
+
+- `window.__PYWASM_SHARED_VARS__`: current shared variable object.
+- `window.pywasmShared`: helper API (`get`, `set`, `merge`, `all`, `subscribe`).
+- `window` event `pywasm:shared-update`: emitted on `set`/`merge`.
+
+Example in custom JS:
+
+```js
+const chart = window.pywasmShared.get('chart', { labels: [], values: [] });
+
+const unsubscribe = window.pywasmShared.subscribe(({ state }) => {
+    const nextChart = state.chart;
+    if (nextChart) {
+        renderChart(nextChart);
+    }
+});
+
+window.addEventListener('pywasm:shared-update', (event) => {
+    console.log('Shared vars changed:', event.detail);
+});
+```
+
 ## Flask Integration
 
 ```python

@@ -4,10 +4,13 @@ import initWasm, {
   wasm_boot as wasmBoot,
   wasm_on_websocket_open as wasmOnWebSocketOpen,
   wasm_set_connection_status as wasmSetConnectionStatus
-} from '../wasm_ui/pkg/wasm_ui.js';
+} from '../wasm_ui/pkg/wasm_ui.js?v=20260314b';
 
 const RUNTIME_CONFIG_URL = '/config/pywasm.runtime.json';
 const INLINE_RUNTIME_CONFIG_GLOBAL = '__PYWASM_RUNTIME_CONFIG__';
+const SHARED_STATE_GLOBAL = '__PYWASM_SHARED_VARS__';
+const SHARED_API_GLOBAL = 'pywasmShared';
+const SHARED_UPDATE_EVENT = 'pywasm:shared-update';
 
 function loadInlineRuntimeConfig() {
   if (typeof window === 'undefined') {
@@ -36,11 +39,137 @@ async function loadRuntimeConfig() {
       mount: {
         ...(fetchedConfig?.mount ?? {}),
         ...(inlineConfig?.mount ?? {})
+      },
+      shared: {
+        ...(fetchedConfig?.shared ?? {}),
+        ...(inlineConfig?.shared ?? {})
       }
     };
   } catch {
     return inlineConfig;
   }
+}
+
+function cloneSharedValue(value) {
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(value);
+    } catch {
+      // Fallback for non-cloneable values.
+    }
+  }
+  if (value === undefined) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return value;
+  }
+}
+
+function emitSharedUpdate(detail) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') {
+    return;
+  }
+  try {
+    window.dispatchEvent(new CustomEvent(SHARED_UPDATE_EVENT, { detail }));
+  } catch {
+    // Ignore dispatch failures.
+  }
+}
+
+function initializeSharedState(runtimeConfig) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const fromRuntime = runtimeConfig?.shared;
+  const initialState = fromRuntime && typeof fromRuntime === 'object' && !Array.isArray(fromRuntime)
+    ? cloneSharedValue(fromRuntime)
+    : {};
+
+  const subscribers = new Set();
+
+  function notifySubscribers(payload) {
+    for (const callback of subscribers) {
+      try {
+        callback(payload);
+      } catch {
+        // Ignore subscriber exceptions to keep updates flowing.
+      }
+    }
+    emitSharedUpdate(payload);
+  }
+
+  function currentState() {
+    const snapshot = window[SHARED_STATE_GLOBAL];
+    if (snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)) {
+      return snapshot;
+    }
+    return {};
+  }
+
+  window[SHARED_STATE_GLOBAL] = initialState;
+
+  window[SHARED_API_GLOBAL] = {
+    get(key, defaultValue = null) {
+      if (typeof key !== 'string' || key.length === 0) {
+        return cloneSharedValue(currentState());
+      }
+      const state = currentState();
+      return Object.prototype.hasOwnProperty.call(state, key)
+        ? cloneSharedValue(state[key])
+        : defaultValue;
+    },
+    set(key, value) {
+      if (typeof key !== 'string' || key.length === 0) {
+        return cloneSharedValue(currentState());
+      }
+      const next = {
+        ...currentState(),
+        [key]: cloneSharedValue(value)
+      };
+      window[SHARED_STATE_GLOBAL] = next;
+      const payload = {
+        type: 'set',
+        key,
+        value: cloneSharedValue(next[key]),
+        state: cloneSharedValue(next)
+      };
+      notifySubscribers(payload);
+      return payload.state;
+    },
+    merge(values) {
+      if (!values || typeof values !== 'object' || Array.isArray(values)) {
+        return cloneSharedValue(currentState());
+      }
+      const next = {
+        ...currentState(),
+        ...cloneSharedValue(values)
+      };
+      window[SHARED_STATE_GLOBAL] = next;
+      const payload = {
+        type: 'merge',
+        values: cloneSharedValue(values),
+        state: cloneSharedValue(next)
+      };
+      notifySubscribers(payload);
+      return payload.state;
+    },
+    all() {
+      return cloneSharedValue(currentState());
+    },
+    subscribe(callback) {
+      if (typeof callback !== 'function') {
+        return () => {};
+      }
+      subscribers.add(callback);
+      return () => {
+        subscribers.delete(callback);
+      };
+    }
+  };
 }
 
 function resolveMountElementId(runtimeConfig) {
@@ -340,6 +469,7 @@ globalThis.wsSend = wsSend;
 
 async function start() {
   const runtimeConfig = await loadRuntimeConfig();
+  initializeSharedState(runtimeConfig);
   ensureMountElement(runtimeConfig);
 
   await initWasm();

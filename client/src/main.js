@@ -4,7 +4,7 @@ import initWasm, {
   wasm_boot as wasmBoot,
   wasm_on_websocket_open as wasmOnWebSocketOpen,
   wasm_set_connection_status as wasmSetConnectionStatus
-} from '../wasm_ui/pkg/wasm_ui.js';
+} from '../wasm_ui/pkg/wasm_ui.js?v=20260314b';
 
 const RUNTIME_CONFIG_URL = '/config/pywasm.runtime.json';
 const INLINE_RUNTIME_CONFIG_GLOBAL = '__PYWASM_RUNTIME_CONFIG__';

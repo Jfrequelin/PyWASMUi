@@ -1,6 +1,8 @@
 """Example 10: full widget catalog showcase, implemented step by step."""
 
+import json
 import os
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,8 @@ from pywasm_ui import (
     AccordionItemWidget,
     AccordionWidget,
     AlertWidget,
+    AudioWidget,
+    BarChartWidget,
     BadgeWidget,
     ButtonWidget,
     CardWidget,
@@ -35,12 +39,14 @@ from pywasm_ui import (
     RowWidget,
     SelectWidget,
     SliderWidget,
+    SpinnerWidget,
     StackWidget,
     Style,
     TabItemWidget,
     TabsWidget,
     TextAreaWidget,
     TextInputWidget,
+    VideoWidget,
     WasmWidget,
     WindowWidget,
     pywasm_ui,
@@ -256,9 +262,74 @@ def on_progress_click(session: PyWasmSession) -> list[CallbackResponse]:
     current = _safe_int(session.data.get("progress"), default=25)
     next_value = min(current + 15, 100)
     session.data["progress"] = next_value
+    chart_values = [max(8, next_value // 3), max(12, next_value // 2), next_value]
     return [
         session.update("task_progress", attrs={"value": str(next_value), "max": "100"}),
+        session.update(
+            "chart_feedback",
+            attrs={"data-chart-values": json.dumps(chart_values, ensure_ascii=True)},
+        ),
         session.update("badge_state", text=f"Progression mise a jour: {next_value}%"),
+    ]
+
+
+def _next_chart_window(session: PyWasmSession) -> tuple[list[int], list[str], int]:
+    history = session.data.get("chart_history")
+    if not isinstance(history, list):
+        history = [24, 42, 72]
+
+    tick = _safe_int(session.data.get("chart_tick"), default=len(history)) + 1
+    next_value = random.randint(8, 100)
+
+    numeric_history = [
+        _safe_int(value, default=0)
+        for value in history
+    ]
+    numeric_history.append(next_value)
+    window = numeric_history[-12:]
+
+    labels = [f"t{index}" for index in range(tick - len(window) + 1, tick + 1)]
+
+    session.data["chart_history"] = window
+    session.data["chart_tick"] = tick
+
+    return window, labels, next_value
+
+
+def on_chart_stream_tick(session: PyWasmSession) -> list[CallbackResponse]:
+    values, labels, latest = _next_chart_window(session)
+    return [
+        session.update(
+            "chart_feedback",
+            attrs={
+                "data-chart-values": json.dumps(values, ensure_ascii=True),
+                "data-chart-labels": json.dumps(labels, ensure_ascii=True),
+                "data-chart-max": "100",
+            },
+        ),
+        session.update("label_chart_latest", text=f"Derniere valeur serveur: {latest}"),
+        session.update("badge_state", text=f"Flux chart: nouveau point {latest}"),
+    ]
+
+
+def on_chart_stream_burst(session: PyWasmSession) -> list[CallbackResponse]:
+    values: list[int] = []
+    labels: list[str] = []
+    latest = 0
+    for _ in range(5):
+        values, labels, latest = _next_chart_window(session)
+
+    return [
+        session.update(
+            "chart_feedback",
+            attrs={
+                "data-chart-values": json.dumps(values, ensure_ascii=True),
+                "data-chart-labels": json.dumps(labels, ensure_ascii=True),
+                "data-chart-max": "100",
+            },
+        ),
+        session.update("label_chart_latest", text=f"Derniere valeur serveur: {latest}"),
+        session.update("badge_state", text="Flux chart: defilement accelere (5 points)"),
     ]
 
 
@@ -687,6 +758,19 @@ def _build_features_section() -> list[WasmWidget]:
             ),
             style=Style(background_color="#0f172a", color="#e2e8f0", padding="10px", border_radius="6px"),
         ),
+        VideoWidget(
+            id="video_demo_preview",
+            parent="stack_features",
+            src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+            muted=True,
+            style=Style(max_width="100%", border_radius="8px", border="1px solid #e2e8f0"),
+        ),
+        AudioWidget(
+            id="audio_demo_preview",
+            parent="stack_features",
+            src="https://interactive-examples.mdn.mozilla.net/media/examples/t-rex-roar.mp3",
+            style=Style(width="100%"),
+        ),
         DividerWidget(id="divider_theme_feedback", parent="stack_features"),
         HeadingWidget(id="heading_theme_feedback", parent="stack_features", text="Theme: Data et feedback", level=4),
         RowWidget(id="row_theme_feedback", parent="stack_features", gap="10px"),
@@ -694,6 +778,22 @@ def _build_features_section() -> list[WasmWidget]:
         BadgeWidget(id="badge_feedback_info", parent="row_theme_feedback", text="Info", variant="info"),
         BadgeWidget(id="badge_feedback_success", parent="row_theme_feedback", text="Success", variant="success"),
         ProgressWidget(id="progress_theme_feedback", parent="stack_features", value=72, max_value=100),
+        BarChartWidget(
+            id="chart_feedback",
+            parent="stack_features",
+            labels=["t1", "t2", "t3"],
+            values=[24, 42, 72],
+            max_value=100,
+            title="Progression feedback",
+            style=Style(width="100%", margin_top="8px"),
+        ),
+        RowWidget(id="row_chart_controls", parent="stack_features", gap="8px"),
+        ButtonWidget(id="btn_chart_tick", parent="row_chart_controls", text="+1 point serveur", on_click=on_chart_stream_tick),
+        ButtonWidget(id="btn_chart_burst", parent="row_chart_controls", text="Defilement x5", on_click=on_chart_stream_burst),
+        LabelWidget(id="label_chart_latest", parent="stack_features", text="Derniere valeur serveur: 72"),
+        RowWidget(id="row_feedback_loading", parent="stack_features", gap="8px"),
+        SpinnerWidget(id="spinner_feedback", parent="row_feedback_loading", label="Chargement des donnees"),
+        LabelWidget(id="spinner_feedback_label", parent="row_feedback_loading", text="Traitement en cours..."),
         AlertWidget(
             id="alert_theme_feedback",
             parent="stack_features",

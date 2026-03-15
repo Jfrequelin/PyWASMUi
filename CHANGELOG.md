@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-14] - Native WASM BarChart Widget
+
+### Added
+- Added `BarChartWidget` with Python API in `python_lib/pywasm_ui/widgets/html/BarChartWidget.py`.
+- Exported `BarChartWidget` in:
+  - `python_lib/pywasm_ui/widgets/html/__init__.py`
+  - `python_lib/pywasm_ui/widgets/__init__.py`
+  - `python_lib/pywasm_ui/__init__.py`
+
+### Changed
+- Implemented native SVG rendering for bar charts in WASM runtime (`client/wasm_ui/src/dom.rs`) with automatic redraw on widget updates.
+- Extended example 10 feedback section with a dynamic bar chart updated by server callbacks.
+- Added server-side random time-series generation with scrolling window behavior in example 10 (single tick and burst controls).
+- Added base theme styles for `.bar-chart-widget` in `server/app/examples/web/themes/base.css`.
+- Extended unit tests in `tests/unit/test_widgets.py` with payload and kind checks for `BarChartWidget`.
+
+## [2026-03-14] - Audio, Video, and Spinner Widgets
+
+### Added
+- Added new HTML widget classes:
+  - `python_lib/pywasm_ui/widgets/html/AudioWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/VideoWidget.py`
+  - `python_lib/pywasm_ui/widgets/html/SpinnerWidget.py`
+- Exported the new widgets in:
+  - `python_lib/pywasm_ui/widgets/html/__init__.py`
+  - `python_lib/pywasm_ui/widgets/__init__.py`
+  - `python_lib/pywasm_ui/__init__.py`
+
+### Changed
+- Extended `server/app/examples/fastapi/10_widgets_catalog_fastapi.py` to demonstrate audio/video media widgets and a loading spinner in the feedback theme.
+- Added base styles for `.audio-widget`, `.video-widget`, and `.spinner-widget` in `server/app/examples/web/themes/base.css`.
+- Extended widget unit tests in `tests/unit/test_widgets.py` with payload assertions for the new widgets.
+
 ## [2026-03-14] - Media Widgets and Layering Defaults
 
 ### Added

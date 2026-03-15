@@ -6,12 +6,12 @@ thread_local! {
     static STATE: RefCell<ClientState> = RefCell::new(ClientState::default());
 }
 
-pub(crate) fn set_session(token: String, secret: String) {
+pub(crate) fn set_session(token: String, secret: String, nonce_seed: u64) {
     STATE.with(|state| {
         let mut s = state.borrow_mut();
         s.session_token = Some(token);
         s.client_secret = Some(secret);
-        s.nonce = 0;
+        s.nonce = nonce_seed;
     });
 }
 

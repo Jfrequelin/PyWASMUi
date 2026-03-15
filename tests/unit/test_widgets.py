@@ -8,6 +8,8 @@ from pywasm_ui.widgets import (
     AccordionItemWidget,
     AccordionWidget,
     AlertWidget,
+    AudioWidget,
+    BarChartWidget,
     BadgeWidget,
     ButtonWidget,
     CardWidget,
@@ -30,12 +32,14 @@ from pywasm_ui.widgets import (
     RowWidget,
     SelectWidget,
     SliderWidget,
+    SpinnerWidget,
     StackWidget,
     Style,
     TabItemWidget,
     TabsWidget,
     TextAreaWidget,
     TextInputWidget,
+    VideoWidget,
     WasmWidget,
     WindowWidget,
     WidgetTree,
@@ -334,6 +338,53 @@ def test_link_image_and_codeblock_widgets_payloads_and_handlers() -> None:
     assert "language-python" in code_payload["classes"]
 
 
+def test_audio_video_and_spinner_widgets_payloads() -> None:
+    video = VideoWidget(id="video_1", src="https://example.test/demo.mp4", muted=True)
+    audio = AudioWidget(id="audio_1", src="https://example.test/demo.mp3")
+    spinner = SpinnerWidget(id="spinner_1", label="Chargement des donnees")
+
+    video_payload = video.to_payload()["props"]
+    assert video_payload["__tag"] == "video"
+    assert video_payload["attrs"]["src"] == "https://example.test/demo.mp4"
+    assert video_payload["attrs"]["muted"] == "true"
+    assert "video-widget" in video_payload["classes"]
+
+    audio_payload = audio.to_payload()["props"]
+    assert audio_payload["__tag"] == "audio"
+    assert audio_payload["attrs"]["src"] == "https://example.test/demo.mp3"
+    assert audio_payload["attrs"]["controls"] == "true"
+    assert "audio-widget" in audio_payload["classes"]
+
+    spinner_payload = spinner.to_payload()["props"]
+    assert spinner_payload["__tag"] == "div"
+    assert spinner_payload["attrs"]["role"] == "status"
+    assert spinner_payload["attrs"]["aria-label"] == "Chargement des donnees"
+    assert spinner_payload["style"]["width"] == "24px"
+    assert spinner_payload["style"]["height"] == "24px"
+    assert "spinner-widget" in spinner_payload["classes"]
+
+
+def test_bar_chart_widget_payload() -> None:
+    chart = BarChartWidget(
+        id="chart_1",
+        values=[10, 24, 42],
+        labels=["A", "B", "C"],
+        max_value=50,
+        width=400,
+        height=200,
+        title="Demo chart",
+    )
+
+    payload = chart.to_payload()["props"]
+    assert payload["__tag"] == "div"
+    assert "bar-chart-widget" in payload["classes"]
+    assert payload["attrs"]["data-chart-values"] == "[10.0, 24.0, 42.0]"
+    assert payload["attrs"]["data-chart-labels"] == "[\"A\", \"B\", \"C\"]"
+    assert payload["attrs"]["data-chart-max"] == "50.0"
+    assert payload["attrs"]["data-chart-width"] == "400"
+    assert payload["attrs"]["data-chart-height"] == "200"
+
+
 def test_html_widget_exports_match_available_widget_classes() -> None:
     exported = set(html_widgets.__all__)
     discovered = {
@@ -354,6 +405,8 @@ def test_html_widget_kinds_follow_class_name_convention() -> None:
         AccordionItemWidget(id="accordion_item_kind", parent="accordion_kind"),
         AccordionHeaderWidget(id="accordion_header_kind", parent="accordion_item_kind", text="Header"),
         AlertWidget(id="alert_kind"),
+        AudioWidget(id="audio_kind", src=""),
+        BarChartWidget(id="bar_chart_kind", values=[1, 2, 3]),
         BadgeWidget(id="badge_kind"),
         ButtonWidget(id="button_kind"),
         CardWidget(id="card_kind"),
@@ -375,11 +428,13 @@ def test_html_widget_kinds_follow_class_name_convention() -> None:
         RowWidget(id="row_kind"),
         SelectWidget(id="select_kind"),
         SliderWidget(id="slider_kind"),
+        SpinnerWidget(id="spinner_kind"),
         StackWidget(id="stack_kind"),
         TabsWidget(id="tabs_kind"),
         TabItemWidget(id="tab_item_kind", parent="tabs_kind", text="Tab"),
         TextAreaWidget(id="text_area_kind"),
         TextInputWidget(id="text_input_kind"),
+        VideoWidget(id="video_kind", src=""),
         WindowWidget(id="window_kind"),
     ]
 

@@ -37,6 +37,11 @@
   color: #fff7ed;
 }
 
+:root[data-theme="neo-ember"] #app input[type="date"] {
+  color-scheme: dark;
+  --pywasm-date-icon-filter: invert(0.95) sepia(0.18) saturate(2.2) hue-rotate(330deg) brightness(1.08);
+}
+
 :root[data-theme="neo-ember"] #app input[type="text"]:focus,
 :root[data-theme="neo-ember"] #app input[type="date"]:focus,
 :root[data-theme="neo-ember"] #app textarea:focus,
