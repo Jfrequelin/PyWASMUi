@@ -442,7 +442,7 @@ body {
   position: relative;
   overflow: visible !important;
   isolation: isolate;
-  z-index: var(--pywasm-tooltip-host-z-index, 2147483000);
+  z-index: var(--pywasm-tooltip-host-z-index, 2147483646);
 }
 
 #app .pywasm-tooltip-host::after {
@@ -450,7 +450,7 @@ body {
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  z-index: var(--pywasm-tooltip-z-index, 2147483646);
+  z-index: var(--pywasm-tooltip-z-index, 2147483647);
   max-width: min(320px, 80vw);
   width: max-content;
   margin: 0;

@@ -118,6 +118,22 @@ class InteractiveWidgets:
     tooltip_target_btn: WasmWidget
 
 
+def _snippet_widget(*, snippet_id: str, parent: str, text: str) -> CodeBlockWidget:
+    return CodeBlockWidget(
+        id=snippet_id,
+        parent=parent,
+        language="python",
+        text=text,
+        style=Style(
+            background_color="#0f172a",
+            color="#e2e8f0",
+            padding="10px",
+            border_radius="8px",
+            white_space="pre-wrap",
+        ),
+    )
+
+
 # Step 1: handlers used by interactive widgets.
 def _on_delete_row(row_id: str):
     def _handler(session: PyWasmSession) -> list[CallbackResponse]:
@@ -545,6 +561,17 @@ def _build_showcase_header(widgets: InteractiveWidgets) -> list[WasmWidget]:
         widgets.btn_2,
         widgets.btn_icon,
         AlertWidget(id="alert_status", parent="stack_header", text="Aucune alerte pour le moment.", level="info"),
+        _snippet_widget(
+            snippet_id="code_header_actions",
+            parent="stack_header",
+            text=(
+                "row = RowWidget(id='row_actions', parent='stack_header', gap='10px')\n"
+                "btn_1 = ButtonWidget(id='btn_1', parent='row_actions', text='Ajouter +1')\n"
+                "btn_2 = ButtonWidget(id='btn_2', parent='row_actions', text='Ajouter +2')\n"
+                "btn_icon = IconButtonWidget(id='btn_icon', parent='row_actions', icon='*', text='Ajouter une note')\n"
+                "alert_status = AlertWidget(id='alert_status', parent='stack_header', level='info')"
+            ),
+        ),
     ]
 
 
@@ -614,6 +641,30 @@ def _build_interaction_section(widgets: InteractiveWidgets, theme_names: list[st
                 z_index="9999",
             ),
         ),
+        _snippet_widget(
+            snippet_id="code_interactions_form",
+            parent="stack_interactions",
+            text=(
+                "name_input = TextInputWidget(id='input_name', parent='stack_interactions')\n"
+                "slider = SliderWidget(id='slider_volume', parent='stack_interactions', min_value=0, max_value=100, step=5)\n"
+                "notes = TextAreaWidget(id='textarea_notes', parent='stack_interactions')\n"
+                "checkbox = CheckboxWidget(id='checkbox_terms', parent='stack_interactions', checked=False)\n"
+                "date_input = DatePickerWidget(id='date_input', parent='stack_interactions', value='2026-03-09')\n"
+                "category = SelectWidget(id='category_select', parent='stack_interactions')"
+            ),
+        ),
+        _snippet_widget(
+            snippet_id="code_interactions_feedback",
+            parent="stack_interactions",
+            text=(
+                "progress = ProgressWidget(id='task_progress', parent='stack_interactions', value=25, max_value=100)\n"
+                "progress_btn = ButtonWidget(id='progress_btn', parent='stack_interactions', text='Augmenter la progression')\n"
+                "tooltip_target = ButtonWidget(id='tooltip_target_btn', parent='tooltip_anchor', text='Survolez-moi 2 secondes')\n"
+                "tooltip_target.tooltip('Astuce: ...', delay_ms=2000)\n"
+                "modal_btn = ButtonWidget(id='modal_btn', parent='modal_anchor', text='Afficher / masquer l\'aide')\n"
+                "modal = ModalWidget(id='info_modal', parent='modal_anchor', is_open=False)"
+            ),
+        ),
     ]
 
 
@@ -643,6 +694,18 @@ def _build_features_section() -> list[WasmWidget]:
             id="paragraph_tabs_accordion_intro",
             parent="stack_features",
             text="Tabs et Accordion permettent de structurer des contenus longs sans surcharger la page.",
+        ),
+        _snippet_widget(
+            snippet_id="code_tabs_accordion",
+            parent="stack_features",
+            text=(
+                "tabs = TabsWidget(id='tabs_demo', parent='stack_features')\n"
+                "TabItemWidget(id='tab_demo_overview', parent='tabs_demo', text='Overview', selected=True)\n"
+                "TabItemWidget(id='tab_demo_metrics', parent='tabs_demo', text='Metrics')\n"
+                "TabItemWidget(id='tab_demo_settings', parent='tabs_demo', text='Settings')\n"
+                "accordion = AccordionWidget(id='accordion_demo', parent='stack_features')\n"
+                "AccordionItemWidget(id='accordion_demo_item_1', parent='accordion_demo', open_by_default=True)"
+            ),
         ),
         TabsWidget(id="tabs_demo", parent="stack_features"),
         TabItemWidget(
@@ -727,6 +790,17 @@ def _build_features_section() -> list[WasmWidget]:
             parent="stack_features",
             text="Ce bloc montre des contenus riches (lien, image, extrait de code) composes cote serveur.",
         ),
+        _snippet_widget(
+            snippet_id="code_media_widgets",
+            parent="stack_features",
+            text=(
+                "LinkWidget(id='link_demo_docs', parent='stack_features', href='https://github.com/Jfrequelin/PyWASMUi')\n"
+                "ImageWidget(id='image_demo_preview', parent='stack_features', src='data:image/svg+xml,...')\n"
+                "CodeBlockWidget(id='code_demo_snippet', parent='stack_features', language='python', text='...')\n"
+                "VideoWidget(id='video_demo_preview', parent='stack_features', src='https://.../flower.mp4')\n"
+                "AudioWidget(id='audio_demo_preview', parent='stack_features', src='https://.../t-rex-roar.mp3')"
+            ),
+        ),
         LinkWidget(
             id="link_demo_docs",
             parent="stack_features",
@@ -777,6 +851,17 @@ def _build_features_section() -> list[WasmWidget]:
         BadgeWidget(id="badge_state", parent="row_theme_feedback", text="Derniere action: pret", variant="info"),
         BadgeWidget(id="badge_feedback_info", parent="row_theme_feedback", text="Info", variant="info"),
         BadgeWidget(id="badge_feedback_success", parent="row_theme_feedback", text="Success", variant="success"),
+        _snippet_widget(
+            snippet_id="code_feedback_widgets",
+            parent="stack_features",
+            text=(
+                "BadgeWidget(id='badge_state', parent='row_theme_feedback', text='Derniere action: pret', variant='info')\n"
+                "ProgressWidget(id='progress_theme_feedback', parent='stack_features', value=72, max_value=100)\n"
+                "BarChartWidget(id='chart_feedback', parent='stack_features', labels=['t1', 't2', 't3'], values=[24, 42, 72])\n"
+                "SpinnerWidget(id='spinner_feedback', parent='row_feedback_loading', label='Chargement des donnees')\n"
+                "AlertWidget(id='alert_theme_feedback', parent='stack_features', level='info')"
+            ),
+        ),
         ProgressWidget(id="progress_theme_feedback", parent="stack_features", value=72, max_value=100),
         BarChartWidget(
             id="chart_feedback",
@@ -819,6 +904,17 @@ def _build_dynamic_table_section(widgets: InteractiveWidgets) -> list[WasmWidget
             id="label_table_rows_explain",
             parent="stack_table",
             text="Widget Container + Row + Button: liste dynamique avec suppression ligne par ligne.",
+        ),
+        _snippet_widget(
+            snippet_id="code_dynamic_table",
+            parent="stack_table",
+            text=(
+                "table_rows = ContainerWidget(id='table_rows', parent='stack_table')\n"
+                "RowWidget(id='table_row_1', parent='table_rows', gap='10px')\n"
+                "LabelWidget(id='table_row_1_label', parent='table_row_1', text='Ligne 1')\n"
+                "delete_btn = ButtonWidget(id='table_row_1_delete', parent='table_row_1', text='Supprimer')\n"
+                "delete_btn.command(_on_delete_row('table_row_1'))"
+            ),
         ),
         ContainerWidget(
             id="table_rows",

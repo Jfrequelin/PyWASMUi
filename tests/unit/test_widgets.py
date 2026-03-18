@@ -169,8 +169,8 @@ def test_widget_tooltip_helper_adds_and_removes_tooltip_metadata() -> None:
     assert payload["attrs"]["data-tooltip"] == "Helpful tooltip"
     assert "title" not in payload["attrs"]
     assert payload["style"]["--pywasm-tooltip-delay-ms"] == "1500"
-    assert payload["style"]["--pywasm-tooltip-host-z-index"] == "2147483000"
-    assert payload["style"]["--pywasm-tooltip-z-index"] == "2147483646"
+    assert payload["style"]["--pywasm-tooltip-host-z-index"] == "2147483646"
+    assert payload["style"]["--pywasm-tooltip-z-index"] == "2147483647"
 
     button.tooltip(None)
     cleared_payload = button.to_payload()["props"]

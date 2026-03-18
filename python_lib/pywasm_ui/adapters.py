@@ -13,8 +13,11 @@ from .communication import (
     WasmAppCommunication,
 )
 from .frontend_assets import get_packaged_frontend_root
+from .logging_utils import get_logger
 from .session import ProtocolViolationError, PyWasmSession, create_session_factory
 from .widgets import WasmWidget
+
+logger = get_logger(__name__)
 
 # Optional framework symbols are initialized here so static analyzers do not
 # report them as undefined when imports are unavailable or TYPE_CHECKING is true.
@@ -131,6 +134,8 @@ def _prune_active_sessions(
     ]
     for token in expired_tokens:
         active_sessions.pop(token, None)
+    if expired_tokens:
+        logger.debug("Pruned %d expired sessions", len(expired_tokens))
 
     if len(active_sessions) <= max_sessions:
         return
@@ -139,6 +144,15 @@ def _prune_active_sessions(
     oldest = sorted(active_sessions.items(), key=lambda item: item[1][1])
     for token, _entry in oldest[:overflow]:
         active_sessions.pop(token, None)
+    logger.warning("Pruned %d sessions due to max session limit (%d)", overflow, max_sessions)
+
+
+def _token_preview(token: str | None) -> str:
+    if not token:
+        return "<none>"
+    if len(token) <= 8:
+        return token
+    return f"{token[:4]}...{token[-4:]}"
 
 
 def _default_security_headers() -> dict[str, str]:
@@ -893,15 +907,23 @@ def mount_fastapi_websocket(
     ttl_seconds = _session_ttl_seconds()
     max_sessions = _max_active_sessions()
     allowed_origins = _allowed_ws_origins()
+    logger.info(
+        "Mounting FastAPI websocket endpoint path=%s ttl_seconds=%s max_sessions=%s",
+        path,
+        ttl_seconds,
+        max_sessions,
+    )
 
     @app.websocket(path)  # type: ignore[attr-defined]
     async def _ws_endpoint(websocket: WebSocket) -> None:
         origin = websocket.headers.get("origin")
         if not _is_origin_allowed(origin, allowed_origins):
+            logger.warning("WebSocket rejected: origin not allowed (%s)", origin)
             await websocket.close(code=1008, reason="origin-not-allowed")
             return
 
         await websocket.accept()
+        logger.info("WebSocket accepted from origin=%s", origin)
         now = time.time()
         _prune_active_sessions(
             active_sessions,
@@ -914,6 +936,9 @@ def mount_fastapi_websocket(
         session = session_entry[0] if session_entry is not None else None
         if session is None:
             session = factory()
+            logger.debug("Created new session token=%s", _token_preview(session.session_token))
+        else:
+            logger.debug("Reusing session token=%s", _token_preview(requested_token))
         active_sessions[session.session_token] = (session, now)
 
         comm = WasmAppCommunication(
@@ -933,6 +958,12 @@ def mount_fastapi_websocket(
                 try:
                     responses = session.handle_client_message(raw)
                 except ProtocolViolationError as exc:
+                    logger.warning(
+                        "Protocol violation token=%s code=%s reason=%s",
+                        _token_preview(session.session_token),
+                        exc.close_code,
+                        exc.reason,
+                    )
                     await websocket.close(code=exc.close_code, reason=exc.reason)
                     return
                 active_sessions[session.session_token] = (session, time.time())
@@ -941,7 +972,11 @@ def mount_fastapi_websocket(
                     await asyncio.sleep(latency_s)
                 await comm.send_commands(session.prepare_outbound_commands(responses))
         except WebSocketDisconnect:
+            logger.info("WebSocket disconnected token=%s", _token_preview(session.session_token))
             return
+        except Exception:
+            logger.exception("Unexpected websocket error token=%s", _token_preview(session.session_token))
+            raise
 
 
 def mount_fastapi_socket(
@@ -987,6 +1022,12 @@ def register_flask_socket(
     ttl_seconds = _session_ttl_seconds()
     max_sessions = _max_active_sessions()
     allowed_origins = _allowed_ws_origins()
+    logger.info(
+        "Registering Flask socket route path=%s ttl_seconds=%s max_sessions=%s",
+        path,
+        ttl_seconds,
+        max_sessions,
+    )
 
     @sock.route(path)  # type: ignore[attr-defined]
     def _ws_handler(ws: object) -> None:
@@ -997,6 +1038,7 @@ def register_flask_socket(
             if isinstance(header_origin, str):
                 origin = header_origin
         if not _is_origin_allowed(origin, allowed_origins):
+            logger.warning("Flask socket rejected: origin not allowed (%s)", origin)
             return
 
         now = time.time()
@@ -1011,6 +1053,9 @@ def register_flask_socket(
         session = session_entry[0] if session_entry is not None else None
         if session is None:
             session = factory()
+            logger.debug("Created new Flask session token=%s", _token_preview(session.session_token))
+        else:
+            logger.debug("Reusing Flask session token=%s", _token_preview(requested_token))
         active_sessions[session.session_token] = (session, now)
 
         for msg in session.prepare_outbound_commands(session.bootstrap_messages()):
@@ -1028,7 +1073,13 @@ def register_flask_socket(
                 time.sleep(latency_s)
             try:
                 responses = session.handle_client_message(raw)
-            except ProtocolViolationError:
+            except ProtocolViolationError as exc:
+                logger.warning(
+                    "Flask protocol violation token=%s code=%s reason=%s",
+                    _token_preview(session.session_token),
+                    exc.close_code,
+                    exc.reason,
+                )
                 # Flask-Sock close semantics can vary by backend; end the loop safely.
                 return
             active_sessions[session.session_token] = (session, time.time())
